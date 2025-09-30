@@ -9,57 +9,81 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .spinner { border-top-color: #3498db; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; /* Tailwind gray-50 */
+        }
+        /* Custom spinner animation */
+        .spinner { 
+            border-top-color: #0891b2; /* Tailwind cyan-600 */
+            animation: spin 1s linear infinite; 
+        }
+        @keyframes spin { 
+            to { transform: rotate(360deg); } 
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; } /* gray-100 */
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; } /* gray-300 */
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; } /* gray-400 */
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="text-gray-800">
 
-    <div id="app" class="max-w-xl mx-auto p-4 min-h-screen">
+    <div id="app" class="max-w-xl mx-auto p-4 md:p-6 min-h-screen">
         
-        <div id="login-view">
-            <div class="text-center pt-16">
-                <h1 class="text-4xl font-bold text-blue-600">Hb Tracker</h1>
-                <p class="mt-2 text-gray-500">Track your estimated Hemoglobin levels over time.</p>
+        <div id="login-view" class="flex flex-col justify-center min-h-[80vh]">
+            <div class="text-center">
+                <div class="inline-block bg-cyan-100 text-cyan-600 p-4 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                </div>
+                <h1 class="text-4xl font-bold text-gray-800 mt-4">Hb Tracker</h1>
+                <p class="mt-2 text-gray-500">Sign in to track your estimated Hemoglobin.</p>
             </div>
-            <div class="mt-12 bg-white p-6 rounded-xl shadow-md">
+            <div class="mt-8 bg-white p-6 rounded-2xl shadow-lg">
                 <label for="user-id" class="block text-sm font-medium text-gray-700">Enter Your Name or ID</label>
-                <input type="text" id="user-id" placeholder="e.g., Patient123" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                
-                <label for="roboflow-key" class="mt-4 block text-sm font-medium text-gray-700">Roboflow API Key</label>
-                <input type="password" id="roboflow-key" placeholder="Paste your Roboflow private key" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <input type="text" id="user-id" placeholder="e.g., Patient123" class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
 
-                <button id="login-btn" class="mt-6 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 font-semibold">
-                    Start Tracking
+                <button id="login-btn" class="mt-6 w-full bg-cyan-600 text-white py-3 px-4 rounded-xl hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all duration-300 font-semibold text-lg">
+                    Sign In
                 </button>
             </div>
         </div>
 
         <div id="dashboard-view" class="hidden">
-            <header class="flex justify-between items-center mb-6">
+            <header class="flex justify-between items-center mb-8">
                 <div>
-                    <h1 class="text-2xl font-bold">Health Dashboard</h1>
-                    <p class="text-gray-500">Welcome back, <span id="welcome-user-id" class="font-semibold"></span></p>
+                    <h1 class="text-3xl font-bold">Dashboard</h1>
+                    <p class="text-gray-500">Welcome back, <span id="welcome-user-id" class="font-semibold text-gray-700"></span></p>
                 </div>
-                <button id="logout-btn" class="text-sm text-gray-500 hover:text-blue-600">Logout</button>
+                <button id="logout-btn" title="Logout" class="text-gray-400 hover:text-cyan-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
             </header>
 
-            <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                <h2 class="font-semibold text-gray-600 mb-2">Latest Estimated Hb</h2>
+            <div class="bg-white p-6 rounded-2xl shadow-lg mb-6">
+                <h2 class="font-semibold text-gray-500 text-lg mb-2">Latest Reading</h2>
                 <div id="latest-reading" class="text-center py-4">
-                    <p class="text-gray-500">No readings yet. Take your first measurement!</p>
+                    <p class="text-gray-500">No readings yet. Take your first measurement below!</p>
                 </div>
             </div>
 
-            <div class="bg-white p-4 rounded-xl shadow-md mb-6">
-                <label for="camera-input" class="w-full text-center cursor-pointer block bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200 font-semibold">
-                    📸 Take a New Reading
+            <div class="bg-white p-6 rounded-2xl shadow-lg mb-6">
+                <label for="camera-input" class="w-full flex items-center justify-center cursor-pointer bg-cyan-600 text-white py-4 px-4 rounded-xl hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all duration-300 font-semibold text-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Take a New Reading
                 </label>
                 <input type="file" accept="image/*" capture="environment" id="camera-input" class="hidden">
-                <div id="analysis-section" class="hidden mt-4 text-center">
-                    <img id="preview-image" class="max-h-60 mx-auto rounded-lg mb-4">
-                    <div id="loader" class="flex items-center justify-center space-x-2 text-gray-600">
+                <div id="analysis-section" class="hidden mt-6 text-center">
+                    <img id="preview-image" class="max-h-60 mx-auto rounded-lg mb-4 border-2 border-gray-200">
+                    <div id="loader" class="flex items-center justify-center space-x-3 text-gray-600 font-medium">
                         <div class="spinner w-6 h-6 rounded-full border-4 border-gray-200"></div>
                         <span id="loader-text">Analyzing...</span>
                     </div>
@@ -67,9 +91,11 @@
             </div>
 
             <div id="history-section">
-                <h2 class="text-xl font-bold mb-4">Reading History</h2>
+                <h2 class="text-2xl font-bold mb-4">Reading History</h2>
                 <div id="history-cards" class="space-y-4">
-                    <p class="text-gray-500 text-center py-4">Your history will appear here.</p>
+                    <div class="bg-white text-center p-6 rounded-2xl">
+                        <p class="text-gray-500">Your past readings will appear here.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -78,11 +104,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
-            // --------------------------------------------------------------------------------
+            const ROBOFLOW_API_KEY = "jMhyBQxeQvj69nttV0mN"; // Hardcoded API Key
             // IMPORTANT: PASTE YOUR VERCEL API URL HERE
-            // --------------------------------------------------------------------------------
             const VERCEL_API_URL = "https://anemia-backend-api.vercel.app/api/analyze"; 
-            // --------------------------------------------------------------------------------
             const ROBOFLOW_MODEL_ID = "eye-conjunctiva-detector/2";
             
             // --- DOM Elements ---
@@ -91,7 +115,6 @@
             const loginBtn = document.getElementById('login-btn');
             const logoutBtn = document.getElementById('logout-btn');
             const userIdInput = document.getElementById('user-id');
-            const roboflowKeyInput = document.getElementById('roboflow-key');
             const welcomeUserId = document.getElementById('welcome-user-id');
             const cameraInput = document.getElementById('camera-input');
             const analysisSection = document.getElementById('analysis-section');
@@ -104,40 +127,38 @@
             // --- State ---
             let appState = {
                 userId: null,
-                roboflowKey: null,
                 history: []
             };
 
             // --- UI Rendering ---
             const renderHistory = () => {
                 if (appState.history.length === 0) {
-                    latestReadingDiv.innerHTML = `<p class="text-gray-500">No readings yet. Take your first measurement!</p>`;
-                    historyCardsDiv.innerHTML = `<p class="text-gray-500 text-center py-4">Your history will appear here.</p>`;
+                    latestReadingDiv.innerHTML = `<p class="text-gray-500">No readings yet. Take your first measurement below!</p>`;
+                    historyCardsDiv.innerHTML = `<div class="bg-white text-center p-6 rounded-2xl"><p class="text-gray-500">Your past readings will appear here.</p></div>`;
                     return;
                 }
                 // Render Latest Reading
                 const latest = appState.history[0];
                 const { color, text } = getHbClassification(latest.hb_value);
                 latestReadingDiv.innerHTML = `
-                    <p class="text-4xl font-bold ${color}">${latest.hb_value.toFixed(2)} <span class="text-2xl font-medium text-gray-500">g/dL</span></p>
-                    <p class="text-sm font-semibold ${color} mt-1">${text}</p>
+                    <p class="text-5xl font-bold ${color}">${latest.hb_value.toFixed(2)} <span class="text-3xl font-medium text-gray-500">g/dL</span></p>
+                    <p class="text-md font-semibold ${color} mt-2">${text}</p>
                 `;
 
                 // Render History Cards
                 historyCardsDiv.innerHTML = '';
                 appState.history.forEach(reading => {
                     const card = document.createElement('div');
-                    card.className = 'bg-white p-4 rounded-xl shadow-md flex items-center space-x-4';
+                    card.className = 'bg-white p-4 rounded-2xl shadow-md flex items-center space-x-4';
                     const dt = new Date(reading.timestamp);
-                    const { color: cardColor, text: cardText } = getHbClassification(reading.hb_value);
+                    const { color: cardColor } = getHbClassification(reading.hb_value);
 
                     card.innerHTML = `
-                        <div>
-                            <img src="data:image/jpeg;base64,${reading.crop_b64}" class="w-20 h-16 object-cover rounded-md">
-                        </div>
+                        <img src="data:image/jpeg;base64,${reading.crop_b64}" class="w-24 h-20 object-cover rounded-xl border">
                         <div class="flex-1">
-                            <p class="font-semibold text-gray-800">${dt.toLocaleDateString()} - ${dt.toLocaleTimeString()}</p>
-                            <p class="text-lg font-bold ${cardColor}">${reading.hb_value.toFixed(2)} g/dL</p>
+                            <p class="font-semibold text-gray-800">${dt.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            <p class="text-xs text-gray-500">${dt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p class="text-xl font-bold ${cardColor} mt-1">${reading.hb_value.toFixed(2)} g/dL</p>
                         </div>
                     `;
                     historyCardsDiv.appendChild(card);
@@ -151,10 +172,10 @@
             
             // --- Helper Functions ---
             const getHbClassification = (hb) => {
-                if (hb < 8) return { color: "text-red-600", text: "Severe Anemia Suspected" };
+                if (hb < 8) return { color: "text-red-500", text: "Severe Anemia Suspected" };
                 if (hb < 10) return { color: "text-orange-500", text: "Moderate Anemia Suspected" };
                 if (hb < 12) return { color: "text-yellow-500", text: "Mild Anemia Suspected" };
-                return { color: "text-green-600", text: "Likely Normal" };
+                return { color: "text-cyan-600", text: "Likely Normal" };
             };
 
             const getBase64 = (file) => new Promise((resolve, reject) => {
@@ -176,12 +197,8 @@
 
             // --- API Calls ---
             const detectConjunctiva = async (base64Image) => {
-                const url = `https://detect.roboflow.com/${ROBOFLOW_MODEL_ID}?api_key=${appState.roboflowKey}&format=json&confidence=25`;
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: base64Image
-                });
+                const url = `https://detect.roboflow.com/${ROBOFLOW_MODEL_ID}?api_key=${ROBOFLOW_API_KEY}&format=json&confidence=25`;
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: base64Image });
                 if (!response.ok) throw new Error('Roboflow API request failed.');
                 const data = await response.json();
                 const preds = data.predictions || [];
@@ -193,23 +210,16 @@
                 return new Promise(resolve => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    const w = box.width;
-                    const h = box.height;
-                    canvas.width = w;
-                    canvas.height = h;
-                    const x = box.x - w / 2;
-                    const y = box.y - h / 2;
+                    const w = box.width; const h = box.height;
+                    canvas.width = w; canvas.height = h;
+                    const x = box.x - w / 2; const y = box.y - h / 2;
                     ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
                     resolve(canvas.toDataURL('image/jpeg').split(',')[1]);
                 });
             };
 
             const analyzeCrop = async (base64Crop) => {
-                const response = await fetch(VERCEL_API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image_b64: base64Crop })
-                });
+                const response = await fetch(VERCEL_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_b64: base64Crop }) });
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.detail || 'Analysis request to backend failed.');
@@ -220,30 +230,22 @@
             // --- Event Listeners ---
             loginBtn.addEventListener('click', () => {
                 const userId = userIdInput.value.trim();
-                const roboflowKey = roboflowKeyInput.value.trim();
-                if (!userId || !roboflowKey) {
-                    alert('Please enter both an ID and your Roboflow API Key.');
+                if (!userId) {
+                    alert('Please enter a Name or ID.');
                     return;
                 }
                 appState.userId = userId;
-                appState.roboflowKey = roboflowKey;
                 appState.history = loadState(userId);
                 welcomeUserId.textContent = userId;
-                
-                // Save credentials to session storage for convenience
                 sessionStorage.setItem('hb-tracker-user', userId);
-                sessionStorage.setItem('hb-tracker-key', roboflowKey);
-
                 renderHistory();
                 showView('dashboard');
             });
 
             logoutBtn.addEventListener('click', () => {
                 sessionStorage.removeItem('hb-tracker-user');
-                sessionStorage.removeItem('hb-tracker-key');
-                appState = { userId: null, roboflowKey: null, history: [] };
+                appState = { userId: null, history: [] };
                 userIdInput.value = '';
-                roboflowKeyInput.value = '';
                 showView('login');
             });
             
@@ -260,25 +262,20 @@
                 previewImage.src = objectURL;
 
                 try {
-                    loaderText.textContent = 'Uploading to Roboflow...';
+                    loaderText.textContent = 'Uploading... (1/4)';
                     const base64Full = await getBase64(file);
                     
-                    loaderText.textContent = 'Detecting conjunctiva...';
+                    loaderText.textContent = 'Detecting eye... (2/4)';
                     const box = await detectConjunctiva(base64Full);
                     
-                    loaderText.textContent = 'Cropping image...';
+                    loaderText.textContent = 'Cropping image... (3/4)';
                     const base64Crop = await cropImageFromBox(img, box);
                     
-                    loaderText.textContent = 'Analyzing with AI model...';
+                    loaderText.textContent = 'Analyzing with AI... (4/4)';
                     const result = await analyzeCrop(base64Crop);
                     
-                    // Success
-                    const newReading = {
-                        hb_value: result.hb_value,
-                        crop_b64: base64Crop,
-                        timestamp: new Date().toISOString()
-                    };
-                    appState.history.unshift(newReading); // Add to beginning
+                    const newReading = { hb_value: result.hb_value, crop_b64: base64Crop, timestamp: new Date().toISOString() };
+                    appState.history.unshift(newReading);
                     saveState();
                     renderHistory();
 
@@ -286,7 +283,7 @@
                     alert(`Analysis Failed: ${error.message}`);
                 } finally {
                     analysisSection.classList.add('hidden');
-                    cameraInput.value = ''; // Reset file input
+                    cameraInput.value = '';
                     URL.revokeObjectURL(objectURL);
                 }
             });
@@ -294,10 +291,8 @@
             // --- App Initialization ---
             const checkSession = () => {
                 const savedUser = sessionStorage.getItem('hb-tracker-user');
-                const savedKey = sessionStorage.getItem('hb-tracker-key');
-                if (savedUser && savedKey) {
+                if (savedUser) {
                     userIdInput.value = savedUser;
-                    roboflowKeyInput.value = savedKey;
                     loginBtn.click();
                 }
             };
