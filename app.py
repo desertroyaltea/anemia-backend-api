@@ -29,8 +29,13 @@ except Exception as e:
 
 # --- HELPER & FEATURE EXTRACTION FUNCTIONS ---
 def kurtosis_numpy(data):
-    mean = np.mean(data); std_dev = np.std(data)
-    return np.mean(((data - mean) / std_dev) ** 4) if std_dev > 0 else 0
+    mean = np.mean(data)
+    std_dev = np.std(data)
+    if std_dev == 0:
+        return 0
+    n = len(data)
+    return np.mean(((data - mean) / std_dev) ** 4)
+
 def exif_upright(pil_img: Image.Image) -> Image.Image:
     return ImageOps.exif_transpose(pil_img).convert("RGB")
 def detect_glare_mask(rgb: np.ndarray) -> np.ndarray:
@@ -53,17 +58,29 @@ def compute_baseline_features(pil_img: Image.Image) -> dict:
     S = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV)[..., 1].astype(np.float32) / 255.0
     a = cv2.cvtColor(rgb, cv2.COLOR_RGB2Lab)[..., 1].astype(np.float32) - 128.0
     R_norm = R / (R + G + B + 1e-6)
-    return { "R_p50": np.percentile(R, 50), "R_norm_p50": np.percentile(R_norm, 50), "a_mean": np.mean(a), "R_p10": np.percentile(R, 10), "gray_mean": np.mean(gray), "RG": np.mean(R) / (np.mean(G) + 1e-6), "gray_kurt": kurtosis_numpy(gray.ravel()), "gray_p90": np.percentile(gray, 90), "S_p50": np.percentile(S, 50), "B_p10": np.percentile(B, 10), "B_mean": np.mean(B), "gray_std": np.std(gray), "B_p75": np.percentile(B, 75), "G_kurt": kurtosis_numpy(G.ravel()) }
+    return {
+        "R_p50": float(np.percentile(R, 50)), "R_norm_p50": float(np.percentile(R_norm, 50)),
+        "a_mean": float(np.mean(a)), "R_p10": float(np.percentile(R, 10)),
+        "gray_mean": float(np.mean(gray)), "RG": float(np.mean(R) / (np.mean(G) + 1e-6)),
+        "gray_kurt": float(kurtosis_numpy(gray.ravel())),
+        "gray_p90": float(np.percentile(gray, 90)),
+        "S_p50": float(np.percentile(S, 50)), "B_p10": float(np.percentile(B, 10)),
+        "B_mean": float(np.mean(B)), "gray_std": float(np.std(gray)),
+        "B_p75": float(np.percentile(B, 75)), 
+        "G_kurt": float(kurtosis_numpy(G.ravel())),
+    }
 def vascularity_features_from_conjunctiva(rgb_u8: np.ndarray) -> dict:
     g = rgb_u8[..., 1].astype(np.uint8)
     g_eq = exposure.equalize_adapthist(g, clip_limit=0.01)
     vmap = filters.frangi(g_eq, sigmas=np.arange(1, 6, 1), alpha=0.5, beta=0.5, black_ridges=True)
     vmap = (vmap - vmap.min()) / (np.ptp(vmap) + 1e-8)
     mask = vmap > filters.threshold_otsu(vmap)
-    mask = morphology.remove_small_objects(mask, min_size=50); mask = morphology.remove_small_holes(mask, area_threshold=50)
+    mask = morphology.remove_small_objects(mask, min_size=50)
+    mask = morphology.remove_small_holes(mask, area_threshold=50)
     skel = skeletonize(mask)
     area = float(mask.shape[0] * mask.shape[1])
-    neigh = cv2.filter2D(skel.astype(np.uint8), -1, np.ones((3, 3), dtype=np.uint8), borderType=cv2.BORDER_CONSTANT)
+    kernel = np.ones((3, 3), dtype=np.uint8)
+    neigh = cv2.filter2D(skel.astype(np.uint8), -1, kernel, borderType=cv2.BORDER_CONSTANT)
     branches = ((skel) & (neigh >= 4))
     lbl, torts = measure.label(skel, connectivity=2), []
     for region in measure.regionprops(lbl):
@@ -71,35 +88,44 @@ def vascularity_features_from_conjunctiva(rgb_u8: np.ndarray) -> dict:
         if coords.shape[0] < 10: continue
         chord = np.linalg.norm(coords.max(0) - coords.min(0)) + 1e-8
         torts.append(float(coords.shape[0]) / chord)
-    return { "vessel_area_fraction": mask.sum() / area, "mean_vesselness": vmap.mean(), "p90_vesselness": np.percentile(vmap, 90), "skeleton_len_per_area": skel.sum() / area, "branchpoint_density": branches.sum() / area, "tortuosity_mean": np.mean(torts) if torts else 1.0 }
+    return {
+        "vessel_area_fraction": float(mask.sum()) / area, "mean_vesselness": float(vmap.mean()),
+        "p90_vesselness": float(np.percentile(vmap, 90)), "skeleton_len_per_area": float(skel.sum()) / area,
+        "branchpoint_density": float(branches.sum()) / area, "tortuosity_mean": float(np.mean(torts)) if torts else 1.0,
+    }
 
 # --- MAIN API FUNCTION ---
 def predict(image_b64: str):
+    """Takes a base64 image string and returns the Hb prediction."""
     if HB_MODEL is None:
         return {"error": "Model is not loaded on the server."}
+    
     try:
         image_bytes = base64.b64decode(image_b64)
         crop_image = Image.open(io.BytesIO(image_bytes))
+        
         rgb = np.array(crop_image.convert("RGB"), dtype=np.uint8)
         glare_mask = detect_glare_mask(rgb)
         rgb_proc = inpaint_glare(rgb, glare_mask) if glare_mask.sum() > 0 else rgb
+        
         feats = {"glare_frac": float(glare_mask.mean())}
         feats.update(compute_baseline_features(Image.fromarray(rgb_proc)))
         feats.update(vascularity_features_from_conjunctiva(rgb_proc))
+
         x_vec = np.array([[feats.get(f, 0.0) for f in HB_FEATURES]], dtype=np.float32)
         hb_pred = float(HB_MODEL.predict(x_vec)[0])
+        
         return {"hb_value": hb_pred}
     except Exception as e:
         return {"error": f"An error occurred during analysis: {str(e)}"}
 
-# --- LAUNCH GRADIO INTERFACE (MODIFIED) ---
+# --- LAUNCH GRADIO INTERFACE ---
 iface = gr.Interface(
     fn=predict,
     inputs=gr.Textbox(),
     outputs=gr.JSON(),
     title="Anemia Hb Estimation API",
-    description="API endpoint for the Hb Tracker app.",
-    api_name="predict"  # <-- THIS IS THE NEW, IMPORTANT LINE
+    description="API endpoint for the Hb Tracker app."
 )
 
 if __name__ == "__main__":
