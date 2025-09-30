@@ -33,11 +33,11 @@ except Exception as e:
     HB_MODEL, DETECTOR_SESSION = None, None
     print(f"CRITICAL: Could not load models. Error: {e}")
 
-# --- UPDATED LOCAL OBJECT DETECTION (YOLOv8 ONNX) ---
+# --- THIS FUNCTION IS NOW CORRECTED ---
 def detect_conjunctiva_local(pil_image: Image.Image):
     model_input_size = (640, 640)
     original_size = pil_image.size
-
+    
     image = pil_image.resize(model_input_size)
     image_np = np.array(image).astype(np.float32) / 255.0
     image_np = np.transpose(image_np, (2, 0, 1))
@@ -62,16 +62,20 @@ def detect_conjunctiva_local(pil_image: Image.Image):
             height = int(h * y_factor)
             scores.append(max_score)
             boxes.append([left, top, width, height])
-
+    
     if not boxes: return None
-
+    
+    # Correctly handle the output of NMSBoxes
     indices = cv2.dnn.NMSBoxes(boxes, scores, 0.25, 0.45)
-    if len(indices) == 0: return None
+    if len(indices) > 0:
+        best_box_index = indices.flatten()[0]
+        best_box = boxes[best_box_index]
+        left, top, width, height = best_box
+        return pil_image.crop((left, top, left + width, top + height))
+    else:
+        return None
 
-    best_box = boxes[indices[0]]
-    left, top, width, height = best_box
-    return pil_image.crop((left, top, left + width, top + height))
-
+# --- Other helper functions (unchanged) ---
 def kurtosis_numpy(data): mean = np.mean(data); std_dev = np.std(data); return np.mean(((data - mean) / std_dev) ** 4) if std_dev > 0 else 0
 def detect_glare_mask(rgb: np.ndarray) -> np.ndarray: hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV).astype(np.float32); S, V = hsv[..., 1] / 255.0, hsv[..., 2] / 255.0; mask_hsv = (V > 0.90) & (S < 0.25); gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0; hi = float(np.quantile(gray, 0.995)); mask_gray = gray >= hi; mask = cv2.morphologyEx((mask_hsv | mask_gray).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=1); return cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
 def inpaint_glare(rgb: np.ndarray, mask: np.ndarray) -> np.ndarray: bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR); out = cv2.inpaint(bgr, (mask.astype(np.uint8) * 255), inpaintRadius=3, flags=cv2.INPAINT_TELEA); return cv2.cvtColor(out, cv2.COLOR_BGR2RGB)
@@ -88,7 +92,7 @@ async def analyze_image(image_data: ImageData):
         image_bytes = base64.b64decode(image_data.image_b64)
         full_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         crop_image = detect_conjunctiva_local(full_image)
-        if crop_image is None: raise HTTPException(status_code=400, detail="Could not detect conjunctiva in the image.")
+        if crop_image is None: raise HTTPException(status_code=400, detail="Could not detect conjunctiva in the image. Please use a clearer, well-lit photo.")
         rgb = np.array(crop_image.convert("RGB"), dtype=np.uint8)
         glare_mask = detect_glare_mask(rgb); rgb_proc = inpaint_glare(rgb, glare_mask) if glare_mask.sum() > 0 else rgb
         feats = {"glare_frac": float(glare_mask.mean())}; feats.update(compute_baseline_features(Image.fromarray(rgb_proc))); feats.update(vascularity_features_from_conjunctiva(rgb_proc))
