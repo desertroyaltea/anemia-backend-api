@@ -11,6 +11,9 @@ from skimage import exposure, filters, morphology, measure
 from skimage.morphology import skeletonize
 from pathlib import Path
 
+# --- NEW IMPORTS ---
+from ultralytics import YOLO
+
 class ImageData(BaseModel):
     image_b64: str
 
@@ -20,46 +23,46 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 HB_ESTIMATION_RUN_DIR = Path("models") / "run_20250918_192217"
 HB_FEATURES = ["glare_frac", "R_norm_p50", "a_mean", "R_p50", "R_p10", "RG", "S_p50", "gray_p90", "gray_kurt", "gray_std", "gray_mean", "B_mean", "B_p10", "B_p75", "G_kurt", "mean_vesselness", "p90_vesselness", "skeleton_len_per_area", "branchpoint_density", "tortuosity_mean", "vessel_area_fraction"]
 
+# --- NEW YOLOv8 MODEL LOADING ---
+try:
+    # Assuming 'best.pt' is copied to the root /app directory by the Dockerfile
+    YOLO_MODEL_PATH = Path("best.pt")
+    CONJUNCTIVA_MODEL = YOLO(YOLO_MODEL_PATH) 
+    print(f"YOLOv8 Conjunctiva model loaded successfully from {YOLO_MODEL_PATH}.")
+except Exception as e:
+    CONJUNCTIVA_MODEL = None
+    print(f"CRITICAL: Could not load YOLO model. Error: {e}")
+
 try:
     hb_model_path = HB_ESTIMATION_RUN_DIR / "hb_rf.joblib"
     HB_MODEL = joblib.load(hb_model_path)
     print("Hemoglobin model loaded successfully.")
 except Exception as e:
     HB_MODEL = None
-    print(f"CRITICAL: Could not load model. Error: {e}")
+    print(f"CRITICAL: Could not load HB estimation model. Error: {e}")
 
-# --- THIS FUNCTION IS NOW MORE ROBUST ---
-def detect_conjunctiva_local(pil_image: Image.Image):
-    img = np.array(pil_image.convert("RGB"))
-    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-    lower_red1 = np.array([0, 70, 50]); upper_red1 = np.array([10, 255, 255])
-    lower_red2 = np.array([160, 70, 50]); upper_red2 = np.array([180, 255, 255])
-    mask1 = cv2.inRange(hsv, lower_red1, upper_red1); mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-    mask = mask1 + mask2; kernel = np.ones((5,5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+# --- REPLACED FUNCTION USING YOLOv8 ---
+def detect_conjunctiva_yolov8(pil_image: Image.Image) -> Image.Image | None:
+    if CONJUNCTIVA_MODEL is None:
+        raise RuntimeError("YOLOv8 model is not loaded.")
+        
+    # YOLO requires the image as a NumPy array for prediction in this context
+    img_np = np.array(pil_image)
     
-    if not contours:
-        return None
-
-    # --- NEW LOGIC TO FILTER CONTOURS ---
-    img_height, img_width = mask.shape
-    img_area = img_height * img_width
-    valid_contours = []
-    for c in contours:
-        area = cv2.contourArea(c)
-        # Only consider contours that are between 0.1% and 50% of the image size
-        if (area > 0.001 * img_area) and (area < 0.5 * img_area):
-            valid_contours.append(c)
+    # Run prediction - we only need the best result (top=1)
+    results = CONJUNCTIVA_MODEL(img_np, conf=0.5, verbose=False)
     
-    if not valid_contours:
+    if not results or not results[0].boxes:
         return None
-    # --- END OF NEW LOGIC ---
-
-    largest_contour = max(valid_contours, key=cv2.contourArea)
-    x, y, w, h = cv2.boundingRect(largest_contour)
-    return pil_image.crop((x, y, x + w, y + h))
+    
+    # Get the bounding box of the highest confidence detection
+    best_box = results[0].boxes.xyxy[0].cpu().numpy().astype(int)
+    
+    # Extract coordinates (x1, y1, x2, y2)
+    x1, y1, x2, y2 = best_box[0], best_box[1], best_box[2], best_box[3]
+    
+    # Crop the image using Pillow's crop method (takes x1, y1, x2, y2)
+    return pil_image.crop((x1, y1, x2, y2))
 
 def kurtosis_numpy(data): mean = np.mean(data); std_dev = np.std(data); return np.mean(((data - mean) / std_dev) ** 4) if std_dev > 0 else 0
 def detect_glare_mask(rgb: np.ndarray) -> np.ndarray: hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV).astype(np.float32); S, V = hsv[..., 1] / 255.0, hsv[..., 2] / 255.0; mask_hsv = (V > 0.90) & (S < 0.25); gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0; hi = float(np.quantile(gray, 0.995)); mask_gray = gray >= hi; mask = cv2.morphologyEx((mask_hsv | mask_gray).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=1); return cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
@@ -81,12 +84,18 @@ def vascularity_features_from_conjunctiva(rgb_u8: np.ndarray) -> dict:
 
 @app.post("/api/analyze")
 async def analyze_image(image_data: ImageData):
-    if HB_MODEL is None: raise HTTPException(status_code=500, detail="Model is not loaded on the server.")
+    if HB_MODEL is None: raise HTTPException(status_code=500, detail="HB estimation model is not loaded on the server.")
+    if CONJUNCTIVA_MODEL is None: raise HTTPException(status_code=500, detail="Conjunctiva detection model (YOLOv8) is not loaded on the server.")
     try:
         image_bytes = base64.b64decode(image_data.image_b64)
         full_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-        crop_image = detect_conjunctiva_local(full_image)
-        if crop_image is None: raise HTTPException(status_code=400, detail="Could not detect conjunctiva. Please use a clearer, well-lit photo.")
+        
+        # --- CALL NEW YOLOv8 DETECTION FUNCTION ---
+        crop_image = detect_conjunctiva_yolov8(full_image)
+        
+        if crop_image is None: 
+            raise HTTPException(status_code=400, detail="Could not detect conjunctiva using YOLOv8. Please use a clearer, well-lit photo.")
+            
         rgb = np.array(crop_image.convert("RGB"), dtype=np.uint8)
         glare_mask = detect_glare_mask(rgb); rgb_proc = inpaint_glare(rgb, glare_mask) if glare_mask.sum() > 0 else rgb
         feats = {"glare_frac": float(glare_mask.mean())}
@@ -98,4 +107,7 @@ async def analyze_image(image_data: ImageData):
         crop_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
         return {"hb_value": hb_pred, "crop_b64": crop_b64}
     except Exception as e:
+        # Check if the error is from the YOLO model not loading
+        if "YOLOv8 model is not loaded" in str(e):
+             raise HTTPException(status_code=500, detail="Conjunctiva detection model failed to initialize.")
         raise HTTPException(status_code=500, detail=f"An error occurred during analysis: {str(e)}")
