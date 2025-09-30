@@ -101,18 +101,11 @@
             };
             const getBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); });
 
-            // --- Local Storage (Simplified) ---
-            const saveState = () => {
-                localStorage.setItem('hbTracker-history', JSON.stringify(appState.history));
-                console.log("[DEBUG] State saved to localStorage.");
-            };
-            const loadState = () => {
-                const savedHistory = localStorage.getItem('hbTracker-history');
-                console.log("[DEBUG] Loaded state from localStorage.");
-                return savedHistory ? JSON.parse(savedHistory) : [];
-            };
+            // --- Local Storage ---
+            const saveState = () => { localStorage.setItem('hbTracker-history', JSON.stringify(appState.history)); console.log("[DEBUG] State saved to localStorage."); };
+            const loadState = () => { const saved = localStorage.getItem('hbTracker-history'); console.log("[DEBUG] Loaded state from localStorage."); return saved ? JSON.parse(saved) : []; };
 
-            // --- API Calls (with logging) ---
+            // --- API Calls ---
             const detectConjunctiva = async (b64) => {
                 const url = `https://detect.roboflow.com/${ROBOFLOW_MODEL_ID}?api_key=${ROBOFLOW_API_KEY}&format=json&confidence=25`;
                 console.log("[DEBUG] Calling Roboflow API...");
@@ -130,18 +123,20 @@
                 const response = await fetch(BACKEND_API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ "data": [base64Crop] })
+                    // THIS IS THE CORRECTED LINE FOR FASTAPI
+                    body: JSON.stringify({ "image_b64": base64Crop }) 
                 });
                 console.log("[DEBUG] Backend response status:", response.status);
-                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ detail: "An unknown server error occurred." }));
+                    throw new Error(errorData.detail || `Server responded with status: ${response.status}`);
+                }
                 const result = await response.json();
                 console.log("[DEBUG] Backend response data:", result);
-                const data = result.data[0];
-                if (data.error) throw new Error(data.error);
-                return data;
+                return result;
             };
 
-            // --- Event Listener (with logging) ---
+            // --- Event Listener ---
             cameraInput.addEventListener('change', async (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -167,12 +162,7 @@
             });
 
             // --- App Initialization ---
-            const initializeApp = () => {
-                appState.history = loadState();
-                renderHistory();
-                console.log("[DEBUG] App initialized with", appState.history.length, "historical records.");
-            };
-            
+            const initializeApp = () => { appState.history = loadState(); renderHistory(); console.log("[DEBUG] App initialized with", appState.history.length, "historical records."); };
             initializeApp();
         });
     </script>
