@@ -6,8 +6,7 @@ import numpy as np
 import base64
 import io
 import cv2
-from scipy.stats import kurtosis
-from scipy.ndimage import convolve
+# SciPy imports are now removed
 from skimage import exposure, filters, morphology, measure
 from skimage.morphology import skeletonize
 from pathlib import Path
@@ -15,8 +14,6 @@ from pathlib import Path
 # --- Initialize FastAPI App ---
 app = FastAPI()
 
-# Allow all origins for CORS (Cross-Origin Resource Sharing)
-# This is important so your Netlify frontend can call this API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- CONFIG & CONSTANTS (same as before) ---
+# --- CONFIG & CONSTANTS ---
 HB_ESTIMATION_RUN_DIR = Path("models") / "run_20250918_192217"
 HB_FEATURES = [
     "glare_frac", "R_norm_p50", "a_mean", "R_p50", "R_p10", "RG", "S_p50",
@@ -35,7 +32,6 @@ HB_FEATURES = [
 ]
 
 # --- MODEL LOADING ---
-# Load the model once when the API starts
 try:
     model_path = HB_ESTIMATION_RUN_DIR / "hb_rf.joblib"
     HB_MODEL = joblib.load(model_path)
@@ -43,7 +39,17 @@ except Exception as e:
     HB_MODEL = None
     print(f"CRITICAL: Could not load model. Error: {e}")
 
-# --- ALL IMAGE PROCESSING & FEATURE EXTRACTION HELPERS (from your original script) ---
+# --- HELPER FUNCTIONS ---
+
+def kurtosis_numpy(data):
+    """Calculate Pearson's kurtosis (normal=3) using NumPy."""
+    mean = np.mean(data)
+    std_dev = np.std(data)
+    if std_dev == 0:
+        return 0
+    n = len(data)
+    return np.mean(((data - mean) / std_dev) ** 4)
+
 def exif_upright(pil_img: Image.Image) -> Image.Image:
     return ImageOps.exif_transpose(pil_img).convert("RGB")
 def detect_glare_mask(rgb: np.ndarray) -> np.ndarray:
@@ -59,6 +65,9 @@ def inpaint_glare(rgb: np.ndarray, mask: np.ndarray) -> np.ndarray:
     bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB_BGR)
     out = cv2.inpaint(bgr, (mask.astype(np.uint8) * 255), inpaintRadius=3, flags=cv2.INPAINT_TELEA)
     return cv2.cvtColor(out, cv2.COLOR_BGR2RGB)
+
+# --- FEATURE EXTRACTION (MODIFIED) ---
+
 def compute_baseline_features(pil_img: Image.Image) -> dict:
     rgb = np.array(pil_img.convert("RGB"), dtype=np.uint8)
     R, G, B = rgb[..., 0].astype(np.float32), rgb[..., 1].astype(np.float32), rgb[..., 2].astype(np.float32)
@@ -70,11 +79,14 @@ def compute_baseline_features(pil_img: Image.Image) -> dict:
         "R_p50": float(np.percentile(R, 50)), "R_norm_p50": float(np.percentile(R_norm, 50)),
         "a_mean": float(np.mean(a)), "R_p10": float(np.percentile(R, 10)),
         "gray_mean": float(np.mean(gray)), "RG": float(np.mean(R) / (np.mean(G) + 1e-6)),
-        "gray_kurt": float(kurtosis(gray.ravel(), fisher=False)), "gray_p90": float(np.percentile(gray, 90)),
+        "gray_kurt": float(kurtosis_numpy(gray.ravel())), # <-- MODIFIED: Using NumPy version
+        "gray_p90": float(np.percentile(gray, 90)),
         "S_p50": float(np.percentile(S, 50)), "B_p10": float(np.percentile(B, 10)),
         "B_mean": float(np.mean(B)), "gray_std": float(np.std(gray)),
-        "B_p75": float(np.percentile(B, 75)), "G_kurt": float(kurtosis(G.ravel(), fisher=False)),
+        "B_p75": float(np.percentile(B, 75)), 
+        "G_kurt": float(kurtosis_numpy(G.ravel())), # <-- MODIFIED: Using NumPy version
     }
+
 def vascularity_features_from_conjunctiva(rgb_u8: np.ndarray, black_ridges: bool = True, min_size: int = 50, area_threshold: int = 50) -> dict:
     g = rgb_u8[..., 1].astype(np.uint8)
     g_eq = exposure.equalize_adapthist(g, clip_limit=0.01)
@@ -85,7 +97,11 @@ def vascularity_features_from_conjunctiva(rgb_u8: np.ndarray, black_ridges: bool
     mask = morphology.remove_small_holes(mask, area_threshold=area_threshold)
     skel = skeletonize(mask)
     area = float(mask.shape[0] * mask.shape[1])
-    neigh = convolve(skel.astype(np.uint8), np.ones((3, 3), dtype=np.uint8), mode='constant', cval=0)
+    
+    # <-- MODIFIED: Using OpenCV's filter2D instead of SciPy's convolve
+    kernel = np.ones((3, 3), dtype=np.uint8)
+    neigh = cv2.filter2D(skel.astype(np.uint8), -1, kernel, borderType=cv2.BORDER_CONSTANT)
+
     branches = ((skel) & (neigh >= 4))
     lbl, torts = measure.label(skel, connectivity=2), []
     for region in measure.regionprops(lbl):
@@ -106,11 +122,9 @@ async def analyze_image(image_b64: str):
         raise HTTPException(status_code=500, detail="Model is not loaded on the server.")
     
     try:
-        # Decode the Base64 image
         image_bytes = base64.b64decode(image_b64)
         crop_image = Image.open(io.BytesIO(image_bytes))
         
-        # --- Feature Extraction ---
         rgb = np.array(crop_image.convert("RGB"), dtype=np.uint8)
         glare_mask = detect_glare_mask(rgb)
         rgb_proc = inpaint_glare(rgb, glare_mask) if glare_mask.sum() > 0 else rgb
@@ -119,7 +133,6 @@ async def analyze_image(image_b64: str):
         feats.update(compute_baseline_features(Image.fromarray(rgb_proc)))
         feats.update(vascularity_features_from_conjunctiva(rgb_proc))
 
-        # --- Model Prediction ---
         x_vec = np.array([[feats.get(f, 0.0) for f in HB_FEATURES]], dtype=np.float32)
         hb_pred = float(HB_MODEL.predict(x_vec)[0])
         
