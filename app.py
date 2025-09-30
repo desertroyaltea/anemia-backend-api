@@ -11,19 +11,15 @@ from skimage import exposure, filters, morphology, measure
 from skimage.morphology import skeletonize
 from pathlib import Path
 
-# --- Pydantic model for request body ---
 class ImageData(BaseModel):
     image_b64: str
 
-# --- Initialize FastAPI App ---
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# --- CONFIG & CONSTANTS ---
 HB_ESTIMATION_RUN_DIR = Path("models") / "run_20250918_192217"
 HB_FEATURES = ["glare_frac", "R_norm_p50", "a_mean", "R_p50", "R_p10", "RG", "S_p50", "gray_p90", "gray_kurt", "gray_std", "gray_mean", "B_mean", "B_p10", "B_p75", "G_kurt", "mean_vesselness", "p90_vesselness", "skeleton_len_per_area", "branchpoint_density", "tortuosity_mean", "vessel_area_fraction"]
 
-# --- MODEL LOADING ---
 try:
     hb_model_path = HB_ESTIMATION_RUN_DIR / "hb_rf.joblib"
     HB_MODEL = joblib.load(hb_model_path)
@@ -32,21 +28,39 @@ except Exception as e:
     HB_MODEL = None
     print(f"CRITICAL: Could not load model. Error: {e}")
 
-# --- LOCAL OBJECT DETECTION (Color-Based) ---
+# --- THIS FUNCTION IS NOW MORE ROBUST ---
 def detect_conjunctiva_local(pil_image: Image.Image):
-    img = np.array(pil_image.convert("RGB")); hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    img = np.array(pil_image.convert("RGB"))
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
     lower_red1 = np.array([0, 70, 50]); upper_red1 = np.array([10, 255, 255])
     lower_red2 = np.array([160, 70, 50]); upper_red2 = np.array([180, 255, 255])
     mask1 = cv2.inRange(hsv, lower_red1, upper_red1); mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
     mask = mask1 + mask2; kernel = np.ones((5,5), np.uint8)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel); mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    if not contours: return None
-    largest_contour = max(contours, key=cv2.contourArea)
+    
+    if not contours:
+        return None
+
+    # --- NEW LOGIC TO FILTER CONTOURS ---
+    img_height, img_width = mask.shape
+    img_area = img_height * img_width
+    valid_contours = []
+    for c in contours:
+        area = cv2.contourArea(c)
+        # Only consider contours that are between 0.1% and 50% of the image size
+        if (area > 0.001 * img_area) and (area < 0.5 * img_area):
+            valid_contours.append(c)
+    
+    if not valid_contours:
+        return None
+    # --- END OF NEW LOGIC ---
+
+    largest_contour = max(valid_contours, key=cv2.contourArea)
     x, y, w, h = cv2.boundingRect(largest_contour)
     return pil_image.crop((x, y, x + w, y + h))
 
-# --- FEATURE EXTRACTION & OTHER HELPERS ---
 def kurtosis_numpy(data): mean = np.mean(data); std_dev = np.std(data); return np.mean(((data - mean) / std_dev) ** 4) if std_dev > 0 else 0
 def detect_glare_mask(rgb: np.ndarray) -> np.ndarray: hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV).astype(np.float32); S, V = hsv[..., 1] / 255.0, hsv[..., 2] / 255.0; mask_hsv = (V > 0.90) & (S < 0.25); gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0; hi = float(np.quantile(gray, 0.995)); mask_gray = gray >= hi; mask = cv2.morphologyEx((mask_hsv | mask_gray).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=1); return cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
 def inpaint_glare(rgb: np.ndarray, mask: np.ndarray) -> np.ndarray: bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR); out = cv2.inpaint(bgr, (mask.astype(np.uint8) * 255), inpaintRadius=3, flags=cv2.INPAINT_TELEA); return cv2.cvtColor(out, cv2.COLOR_BGR2RGB)
@@ -65,7 +79,6 @@ def vascularity_features_from_conjunctiva(rgb_u8: np.ndarray) -> dict:
         torts.append(float(coords.shape[0]) / chord)
     return {"vessel_area_fraction": mask.sum() / area, "mean_vesselness": vmap.mean(), "p90_vesselness": np.percentile(vmap, 90), "skeleton_len_per_area": skel.sum() / area, "branchpoint_density": branches.sum() / area, "tortuosity_mean": np.mean(torts) if torts else 1.0}
 
-# --- API ENDPOINT ---
 @app.post("/api/analyze")
 async def analyze_image(image_data: ImageData):
     if HB_MODEL is None: raise HTTPException(status_code=500, detail="Model is not loaded on the server.")
