@@ -9,23 +9,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f8fafc; /* Tailwind gray-50 */
-        }
-        /* Custom spinner animation */
-        .spinner { 
-            border-top-color: #0891b2; /* Tailwind cyan-600 */
-            animation: spin 1s linear infinite; 
-        }
-        @keyframes spin { 
-            to { transform: rotate(360deg); } 
-        }
-        /* Custom scrollbar for better aesthetics */
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .spinner { border-top-color: #0891b2; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; } /* gray-100 */
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; } /* gray-300 */
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; } /* gray-400 */
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -45,10 +35,7 @@
             <div class="mt-8 bg-white p-6 rounded-2xl shadow-lg">
                 <label for="user-id" class="block text-sm font-medium text-gray-700">Enter Your Name or ID</label>
                 <input type="text" id="user-id" placeholder="e.g., Patient123" class="mt-1 block w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500">
-
-                <button id="login-btn" class="mt-6 w-full bg-cyan-600 text-white py-3 px-4 rounded-xl hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all duration-300 font-semibold text-lg">
-                    Sign In
-                </button>
+                <button id="login-btn" class="mt-6 w-full bg-cyan-600 text-white py-3 px-4 rounded-xl hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all duration-300 font-semibold text-lg">Sign In</button>
             </div>
         </div>
 
@@ -67,17 +54,12 @@
 
             <div class="bg-white p-6 rounded-2xl shadow-lg mb-6">
                 <h2 class="font-semibold text-gray-500 text-lg mb-2">Latest Reading</h2>
-                <div id="latest-reading" class="text-center py-4">
-                    <p class="text-gray-500">No readings yet. Take your first measurement below!</p>
-                </div>
+                <div id="latest-reading" class="text-center py-4"><p class="text-gray-500">No readings yet. Take your first measurement below!</p></div>
             </div>
 
             <div class="bg-white p-6 rounded-2xl shadow-lg mb-6">
                 <label for="camera-input" class="w-full flex items-center justify-center cursor-pointer bg-cyan-600 text-white py-4 px-4 rounded-xl hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-all duration-300 font-semibold text-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     Take a New Reading
                 </label>
                 <input type="file" accept="image/*" capture="environment" id="camera-input" class="hidden">
@@ -92,11 +74,7 @@
 
             <div id="history-section">
                 <h2 class="text-2xl font-bold mb-4">Reading History</h2>
-                <div id="history-cards" class="space-y-4">
-                    <div class="bg-white text-center p-6 rounded-2xl">
-                        <p class="text-gray-500">Your past readings will appear here.</p>
-                    </div>
-                </div>
+                <div id="history-cards" class="space-y-4"><div class="bg-white text-center p-6 rounded-2xl"><p class="text-gray-500">Your past readings will appear here.</p></div></div>
             </div>
         </div>
     </div>
@@ -104,31 +82,19 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONFIGURATION ---
-            const ROBOFLOW_API_KEY = "jMhyBQxeQvj69nttV0mN"; // Hardcoded API Key
-            // IMPORTANT: PASTE YOUR VERCEL API URL HERE
-            const BACKEND_API_URL = "https://alna7el-anemia-backend-api.hf.space/run/predict"; // <-- REPLACE THIS 
+            const ROBOFLOW_API_KEY = "jMhyBQxeQvj69nttV0mN";
+            // IMPORTANT: PASTE YOUR HUGGING FACE API URL HERE
+            const BACKEND_API_URL = "https://YourUsername-YourSpaceName.hf.space/run/predict"; // <-- REPLACE THIS
             const ROBOFLOW_MODEL_ID = "eye-conjunctiva-detector/2";
             
             // --- DOM Elements ---
-            const loginView = document.getElementById('login-view');
-            const dashboardView = document.getElementById('dashboard-view');
-            const loginBtn = document.getElementById('login-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-            const userIdInput = document.getElementById('user-id');
-            const welcomeUserId = document.getElementById('welcome-user-id');
-            const cameraInput = document.getElementById('camera-input');
-            const analysisSection = document.getElementById('analysis-section');
-            const previewImage = document.getElementById('preview-image');
-            const loader = document.getElementById('loader');
-            const loaderText = document.getElementById('loader-text');
-            const latestReadingDiv = document.getElementById('latest-reading');
-            const historyCardsDiv = document.getElementById('history-cards');
-
-            // --- State ---
-            let appState = {
-                userId: null,
-                history: []
-            };
+            const loginView = document.getElementById('login-view'), dashboardView = document.getElementById('dashboard-view');
+            const loginBtn = document.getElementById('login-btn'), logoutBtn = document.getElementById('logout-btn');
+            const userIdInput = document.getElementById('user-id'), welcomeUserId = document.getElementById('welcome-user-id');
+            const cameraInput = document.getElementById('camera-input'), analysisSection = document.getElementById('analysis-section');
+            const previewImage = document.getElementById('preview-image'), loader = document.getElementById('loader'), loaderText = document.getElementById('loader-text');
+            const latestReadingDiv = document.getElementById('latest-reading'), historyCardsDiv = document.getElementById('history-cards');
+            let appState = { userId: null, history: [] };
 
             // --- UI Rendering ---
             const renderHistory = () => {
@@ -137,38 +103,20 @@
                     historyCardsDiv.innerHTML = `<div class="bg-white text-center p-6 rounded-2xl"><p class="text-gray-500">Your past readings will appear here.</p></div>`;
                     return;
                 }
-                // Render Latest Reading
                 const latest = appState.history[0];
                 const { color, text } = getHbClassification(latest.hb_value);
-                latestReadingDiv.innerHTML = `
-                    <p class="text-5xl font-bold ${color}">${latest.hb_value.toFixed(2)} <span class="text-3xl font-medium text-gray-500">g/dL</span></p>
-                    <p class="text-md font-semibold ${color} mt-2">${text}</p>
-                `;
-
-                // Render History Cards
+                latestReadingDiv.innerHTML = `<p class="text-5xl font-bold ${color}">${latest.hb_value.toFixed(2)} <span class="text-3xl font-medium text-gray-500">g/dL</span></p><p class="text-md font-semibold ${color} mt-2">${text}</p>`;
                 historyCardsDiv.innerHTML = '';
                 appState.history.forEach(reading => {
                     const card = document.createElement('div');
                     card.className = 'bg-white p-4 rounded-2xl shadow-md flex items-center space-x-4';
                     const dt = new Date(reading.timestamp);
                     const { color: cardColor } = getHbClassification(reading.hb_value);
-
-                    card.innerHTML = `
-                        <img src="data:image/jpeg;base64,${reading.crop_b64}" class="w-24 h-20 object-cover rounded-xl border">
-                        <div class="flex-1">
-                            <p class="font-semibold text-gray-800">${dt.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                            <p class="text-xs text-gray-500">${dt.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}</p>
-                            <p class="text-xl font-bold ${cardColor} mt-1">${reading.hb_value.toFixed(2)} g/dL</p>
-                        </div>
-                    `;
+                    card.innerHTML = `<img src="data:image/jpeg;base64,${reading.crop_b64}" class="w-24 h-20 object-cover rounded-xl border"><div class="flex-1"><p class="font-semibold text-gray-800">${dt.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</p><p class="text-xs text-gray-500">${dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}</p><p class="text-xl font-bold ${cardColor} mt-1">${reading.hb_value.toFixed(2)} g/dL</p></div>`;
                     historyCardsDiv.appendChild(card);
                 });
             };
-
-            const showView = (view) => {
-                loginView.classList.toggle('hidden', view !== 'login');
-                dashboardView.classList.toggle('hidden', view !== 'dashboard');
-            };
+            const showView = (view) => { loginView.classList.toggle('hidden', view !== 'login'); dashboardView.classList.toggle('hidden', view !== 'dashboard'); };
             
             // --- Helper Functions ---
             const getHbClassification = (hb) => {
@@ -177,126 +125,67 @@
                 if (hb < 12) return { color: "text-yellow-500", text: "Mild Anemia Suspected" };
                 return { color: "text-cyan-600", text: "Likely Normal" };
             };
-
-            const getBase64 = (file) => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-            });
-
-            // --- Local Storage ---
-            const saveState = () => {
-                localStorage.setItem(`hbTracker-${appState.userId}`, JSON.stringify(appState.history));
-            };
-
-            const loadState = (userId) => {
-                const savedHistory = localStorage.getItem(`hbTracker-${userId}`);
-                return savedHistory ? JSON.parse(savedHistory) : [];
-            };
+            const getBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); });
+            const saveState = () => localStorage.setItem(`hbTracker-${appState.userId}`, JSON.stringify(appState.history));
+            const loadState = (userId) => { const saved = localStorage.getItem(`hbTracker-${userId}`); return saved ? JSON.parse(saved) : []; };
 
             // --- API Calls ---
-            const detectConjunctiva = async (base64Image) => {
+            const detectConjunctiva = async (b64) => {
                 const url = `https://detect.roboflow.com/${ROBOFLOW_MODEL_ID}?api_key=${ROBOFLOW_API_KEY}&format=json&confidence=25`;
-                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: base64Image });
+                const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: b64 });
                 if (!response.ok) throw new Error('Roboflow API request failed.');
                 const data = await response.json();
-                const preds = data.predictions || [];
-                if (preds.length === 0) throw new Error('No conjunctiva detected.');
-                return preds.sort((a, b) => b.confidence - a.confidence)[0];
+                if (!data.predictions || data.predictions.length === 0) throw new Error('No conjunctiva detected.');
+                return data.predictions.sort((a, b) => b.confidence - a.confidence)[0];
             };
-
-            const cropImageFromBox = (img, box) => {
-                return new Promise(resolve => {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const w = box.width; const h = box.height;
-                    canvas.width = w; canvas.height = h;
-                    const x = box.x - w / 2; const y = box.y - h / 2;
-                    ctx.drawImage(img, x, y, w, h, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg').split(',')[1]);
-                });
-            };
-
+            const cropImageFromBox = (img, box) => new Promise(resolve => { const c = document.createElement('canvas'), w = box.width, h = box.height; c.width = w; c.height = h; const ctx = c.getContext('2d'); ctx.drawImage(img, box.x - w / 2, box.y - h / 2, w, h, 0, 0, w, h); resolve(c.toDataURL('image/jpeg').split(',')[1]); });
+            
+            // --- THIS IS THE CORRECTED FUNCTION ---
             const analyzeCrop = async (base64Crop) => {
-                const response = await fetch(BACKEND_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_b64: base64Crop }) });
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.detail || 'Analysis request to backend failed.');
-                }
-                return response.json();
+                const response = await fetch(BACKEND_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ "data": [base64Crop] }) // Use Gradio's expected data format
+                });
+                if (!response.ok) throw new Error(`Server responded with status: ${response.status}`);
+                const result = await response.json();
+                const data = result.data[0]; // The actual result is inside the 'data' array
+                if (data.error) throw new Error(data.error); // Check for application-level errors
+                return data; // Returns the { "hb_value": ... } object
             };
 
             // --- Event Listeners ---
             loginBtn.addEventListener('click', () => {
                 const userId = userIdInput.value.trim();
-                if (!userId) {
-                    alert('Please enter a Name or ID.');
-                    return;
-                }
-                appState.userId = userId;
-                appState.history = loadState(userId);
-                welcomeUserId.textContent = userId;
+                if (!userId) { alert('Please enter a Name or ID.'); return; }
+                appState.userId = userId; appState.history = loadState(userId); welcomeUserId.textContent = userId;
                 sessionStorage.setItem('hb-tracker-user', userId);
-                renderHistory();
-                showView('dashboard');
+                renderHistory(); showView('dashboard');
             });
-
-            logoutBtn.addEventListener('click', () => {
-                sessionStorage.removeItem('hb-tracker-user');
-                appState = { userId: null, history: [] };
-                userIdInput.value = '';
-                showView('login');
-            });
+            logoutBtn.addEventListener('click', () => { sessionStorage.removeItem('hb-tracker-user'); appState = { userId: null, history: [] }; userIdInput.value = ''; showView('login'); });
             
             cameraInput.addEventListener('change', async (event) => {
                 const file = event.target.files[0];
                 if (!file) return;
-
-                analysisSection.classList.remove('hidden');
-                loader.classList.remove('hidden');
-                
-                const img = new Image();
-                const objectURL = URL.createObjectURL(file);
-                img.src = objectURL;
-                previewImage.src = objectURL;
-
+                analysisSection.classList.remove('hidden'); loader.classList.remove('hidden');
+                const img = new Image(), objectURL = URL.createObjectURL(file);
+                img.src = objectURL; previewImage.src = objectURL;
                 try {
-                    loaderText.textContent = 'Uploading... (1/4)';
-                    const base64Full = await getBase64(file);
-                    
-                    loaderText.textContent = 'Detecting eye... (2/4)';
-                    const box = await detectConjunctiva(base64Full);
-                    
-                    loaderText.textContent = 'Cropping image... (3/4)';
-                    const base64Crop = await cropImageFromBox(img, box);
-                    
-                    loaderText.textContent = 'Analyzing with AI... (4/4)';
-                    const result = await analyzeCrop(base64Crop);
-                    
+                    loaderText.textContent = 'Uploading... (1/4)'; const base64Full = await getBase64(file);
+                    loaderText.textContent = 'Detecting eye... (2/4)'; const box = await detectConjunctiva(base64Full);
+                    loaderText.textContent = 'Cropping image... (3/4)'; const base64Crop = await cropImageFromBox(img, box);
+                    loaderText.textContent = 'Analyzing with AI... (4/4)'; const result = await analyzeCrop(base64Crop);
                     const newReading = { hb_value: result.hb_value, crop_b64: base64Crop, timestamp: new Date().toISOString() };
-                    appState.history.unshift(newReading);
-                    saveState();
-                    renderHistory();
-
+                    appState.history.unshift(newReading); saveState(); renderHistory();
                 } catch (error) {
-                    alert(`Analysis Failed: ${error.message}`);
+                    alert(`Analysis Failed: ${error.message}`); // This will now show a proper error string
                 } finally {
-                    analysisSection.classList.add('hidden');
-                    cameraInput.value = '';
-                    URL.revokeObjectURL(objectURL);
+                    analysisSection.classList.add('hidden'); cameraInput.value = ''; URL.revokeObjectURL(objectURL);
                 }
             });
 
             // --- App Initialization ---
-            const checkSession = () => {
-                const savedUser = sessionStorage.getItem('hb-tracker-user');
-                if (savedUser) {
-                    userIdInput.value = savedUser;
-                    loginBtn.click();
-                }
-            };
-
+            const checkSession = () => { const user = sessionStorage.getItem('hb-tracker-user'); if (user) { userIdInput.value = user; loginBtn.click(); } };
             checkSession();
         });
     </script>
