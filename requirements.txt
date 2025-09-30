@@ -1,7 +1,11 @@
-gradio==4.44.1
+fastapi
+uvicorn
+gunicorn
 joblib
 numpy
 Pillow
 opencv-python-headless
 scikit-image
 scikit-learn
+python-multipart
+pydantic
