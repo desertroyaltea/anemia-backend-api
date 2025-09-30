@@ -13,21 +13,15 @@
         body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         .spinner { border-top-color: #0891b2; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        /* Style for the main content area to avoid overlapping with the fixed footer */
         main { padding-bottom: 90px; }
-        /* Style for the active nav button */
-        .nav-active svg { color: #0891b2; } /* cyan-600 */
-        .nav-active p { color: #0891b2; } /* cyan-600 */
+        .nav-active svg, .nav-active p { color: #0891b2; }
     </style>
 </head>
 <body class="text-gray-800">
 
     <main class="max-w-xl mx-auto p-4 md:p-6">
         <div id="dashboard-view" class="view">
-            <header class="mb-8">
-                <h1 class="text-3xl font-bold">Dashboard</h1>
-                <p class="text-gray-500">Your health summary at a glance.</p>
-            </header>
+             <header class="mb-8"><h1 class="text-3xl font-bold">Dashboard</h1><p class="text-gray-500">Your health summary at a glance.</p></header>
             <div class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-lg"><h2 class="font-semibold text-gray-500 text-lg mb-2">Latest Reading</h2><div id="latest-reading-dashboard" class="text-center py-4"><p class="text-gray-500">No readings yet. Tap the camera to start!</p></div></div>
                 <div class="grid grid-cols-2 gap-4">
@@ -36,232 +30,100 @@
                 </div>
             </div>
         </div>
-
-        <div id="history-view" class="view hidden">
-            <header class="mb-8"><h1 class="text-3xl font-bold">Reading History</h1></header>
-            <div id="history-cards" class="space-y-4"><div class="bg-white text-center p-6 rounded-2xl"><p class="text-gray-500">Your past readings will appear here.</p></div></div>
-        </div>
-
-        <div id="progress-view" class="view hidden">
-            <header class="mb-8"><h1 class="text-3xl font-bold">Progress</h1></header>
-            <div class="bg-white p-4 rounded-2xl shadow-lg">
-                <canvas id="progress-chart"></canvas>
-            </div>
-        </div>
-        
-        <div id="insights-view" class="view hidden">
-            <header class="mb-8"><h1 class="text-3xl font-bold">Insights</h1></header>
-            <div id="insights-content" class="bg-white p-6 rounded-2xl shadow-lg space-y-4">
-                <p class="text-gray-500">Take a few readings to generate your first health insight.</p>
-            </div>
-        </div>
-
-        <div id="settings-view" class="view hidden">
-            <header class="mb-8"><h1 class="text-3xl font-bold">Settings</h1></header>
-            <div class="bg-white p-6 rounded-2xl shadow-lg text-center"><p class="text-gray-500">This section is currently under development.</p></div>
-        </div>
+        <div id="history-view" class="view hidden"><header class="mb-8"><h1 class="text-3xl font-bold">Reading History</h1></header><div id="history-cards" class="space-y-4"></div></div>
+        <div id="progress-view" class="view hidden"><header class="mb-8"><h1 class="text-3xl font-bold">Progress</h1></header><div class="bg-white p-4 rounded-2xl shadow-lg"><canvas id="progress-chart"></canvas></div></div>
+        <div id="insights-view" class="view hidden"><header class="mb-8"><h1 class="text-3xl font-bold">Insights</h1></header><div id="insights-content" class="bg-white p-6 rounded-2xl shadow-lg space-y-4"></div></div>
+        <div id="settings-view" class="view hidden"><header class="mb-8"><h1 class="text-3xl font-bold">Settings</h1></header><div class="bg-white p-6 rounded-2xl shadow-lg text-center"><p class="text-gray-500">This section is currently under development.</p></div></div>
     </main>
 
-    <footer class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white/80 backdrop-blur-sm border-t border-gray-200">
-        <nav class="flex justify-around items-center h-20">
-            <button data-view="dashboard-view" class="nav-button nav-active text-center text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                <p class="text-xs font-medium mt-1">Dashboard</p>
-            </button>
-            <button data-view="history-view" class="nav-button text-center text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <p class="text-xs font-medium mt-1">History</p>
-            </button>
-            <button id="camera-button" class="text-white bg-cyan-600 rounded-full w-16 h-16 flex items-center justify-center -mt-8 shadow-lg">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            </button>
-            <button data-view="progress-view" class="nav-button text-center text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                <p class="text-xs font-medium mt-1">Progress</p>
-            </button>
-            <button data-view="insights-view" class="nav-button text-center text-gray-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
-                <p class="text-xs font-medium mt-1">Insights</p>
-            </button>
-        </nav>
-    </footer>
-
-    <div id="camera-modal" class="hidden fixed inset-0 bg-gray-900/70 z-50 flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md p-6 rounded-2xl">
-            <h2 class="text-xl font-bold mb-4">New Reading</h2>
-            <label for="camera-input-modal" class="w-full text-center cursor-pointer block bg-gray-100 text-gray-700 py-8 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:bg-gray-200">
-                Tap to open camera
-            </label>
-            <input type="file" accept="image/*" capture="environment" id="camera-input-modal" class="hidden">
-            <div id="analysis-section-modal" class="hidden mt-4 text-center">
-                <img id="preview-image-modal" class="max-h-60 mx-auto rounded-lg mb-4">
-                <div class="flex items-center justify-center space-x-2 text-gray-600">
-                    <div class="spinner w-6 h-6 rounded-full border-4 border-gray-200"></div><span id="loader-text-modal">Analyzing...</span>
-                </div>
-            </div>
-            <button id="close-modal-btn" class="mt-4 w-full bg-gray-200 text-gray-700 py-2 rounded-md">Cancel</button>
-        </div>
-    </div>
+    <footer class="fixed bottom-0 left-0 right-0 max-w-xl mx-auto bg-white/80 backdrop-blur-sm border-t border-gray-200"><nav class="flex justify-around items-center h-20">
+        <button data-view="dashboard-view" class="nav-button nav-active text-center text-gray-500"><svg class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg><p class="text-xs font-medium mt-1">Dashboard</p></button>
+        <button data-view="history-view" class="nav-button text-center text-gray-500"><svg class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><p class="text-xs font-medium mt-1">History</p></button>
+        <button id="camera-button" class="text-white bg-cyan-600 rounded-full w-16 h-16 flex items-center justify-center -mt-8 shadow-lg"><svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg></button>
+        <button data-view="progress-view" class="nav-button text-center text-gray-500"><svg class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg><p class="text-xs font-medium mt-1">Progress</p></button>
+        <button data-view="insights-view" class="nav-button text-center text-gray-500"><svg class="h-6 w-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg><p class="text-xs font-medium mt-1">Insights</p></button>
+    </nav></footer>
+    <div id="camera-modal" class="hidden fixed inset-0 bg-gray-900/70 z-50 flex items-center justify-center p-4"><div class="bg-white w-full max-w-md p-6 rounded-2xl">
+        <h2 class="text-xl font-bold mb-4">New Reading</h2>
+        <label for="camera-input-modal" class="w-full text-center cursor-pointer block bg-gray-100 text-gray-700 py-8 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:bg-gray-200">Tap to open camera</label>
+        <input type="file" accept="image/*" capture="environment" id="camera-input-modal" class="hidden">
+        <div id="analysis-section-modal" class="hidden mt-4 text-center"><img id="preview-image-modal" class="max-h-60 mx-auto rounded-lg mb-4"><div class="flex items-center justify-center space-x-2 text-gray-600"><div class="spinner w-6 h-6 rounded-full border-4 border-gray-200"></div><span id="loader-text-modal">Analyzing...</span></div></div>
+        <button id="close-modal-btn" class="mt-4 w-full bg-gray-200 text-gray-700 py-2 rounded-md">Cancel</button>
+    </div></div>
     
     <script>
-    // --- APP SCRIPT ---
     document.addEventListener('DOMContentLoaded', () => {
-        // --- CONFIGURATION ---
-        const ROBOFLOW_API_KEY = "jMhyBQxeQvj69nttV0mN";
         const BACKEND_API_URL = "https://anemia-backend-api.onrender.com/api/analyze";
-        const ROBOFLOW_MODEL_ID = "eye-conjunctiva-detector/2";
+        const navButtons = document.querySelectorAll('.nav-button'), views = document.querySelectorAll('.view');
+        const cameraButton = document.getElementById('camera-button'), cameraModal = document.getElementById('camera-modal'), closeModalBtn = document.getElementById('close-modal-btn');
+        const cameraInputModal = document.getElementById('camera-input-modal'), analysisSectionModal = document.getElementById('analysis-section-modal');
+        const previewImageModal = document.getElementById('preview-image-modal'), loaderTextModal = document.getElementById('loader-text-modal');
+        let appState = { history: [] }; let progressChart = null;
         
-        // --- DOM Elements & State ---
-        const navButtons = document.querySelectorAll('.nav-button');
-        const views = document.querySelectorAll('.view');
-        const cameraButton = document.getElementById('camera-button');
-        const cameraModal = document.getElementById('camera-modal');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const cameraInputModal = document.getElementById('camera-input-modal');
-        const analysisSectionModal = document.getElementById('analysis-section-modal');
-        const previewImageModal = document.getElementById('preview-image-modal');
-        const loaderTextModal = document.getElementById('loader-text-modal');
-        let appState = { history: [] };
-        let progressChart = null;
-        
-        // --- CORE APP LOGIC ---
-        const showView = (viewId) => {
-            views.forEach(view => view.classList.add('hidden'));
-            document.getElementById(viewId).classList.remove('hidden');
-            navButtons.forEach(btn => {
-                btn.classList.toggle('nav-active', btn.dataset.view === viewId);
-            });
-        };
-
+        const showView = (viewId) => { views.forEach(v => v.classList.add('hidden')); document.getElementById(viewId).classList.remove('hidden'); navButtons.forEach(b => b.classList.toggle('nav-active', b.dataset.view === viewId)); };
         const updateAllViews = () => {
-            // Dashboard View
-            const latestReadingDiv = document.getElementById('latest-reading-dashboard');
-            const avg7DaysEl = document.getElementById('avg-7-days');
-            const totalReadingsEl = document.getElementById('total-readings');
+            const latestReadingDiv = document.getElementById('latest-reading-dashboard'), avg7DaysEl = document.getElementById('avg-7-days'), totalReadingsEl = document.getElementById('total-readings');
             totalReadingsEl.textContent = appState.history.length;
-
             if(appState.history.length > 0) {
-                const latest = appState.history[0];
-                const { color, text } = getHbClassification(latest.hb_value);
+                const latest = appState.history[0]; const { color, text } = getHbClassification(latest.hb_value);
                 latestReadingDiv.innerHTML = `<p class="text-5xl font-bold ${color}">${latest.hb_value.toFixed(2)} <span class="text-3xl font-medium text-gray-500">g/dL</span></p><p class="text-md font-semibold ${color} mt-2">${text}</p>`;
-
-                const sevenDaysAgo = new Date();
-                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-                const recentReadings = appState.history.filter(r => new Date(r.timestamp) > sevenDaysAgo);
-                if (recentReadings.length > 0) {
-                    const avg = recentReadings.reduce((sum, r) => sum + r.hb_value, 0) / recentReadings.length;
-                    avg7DaysEl.textContent = avg.toFixed(2);
-                } else {
-                    avg7DaysEl.textContent = '-';
-                }
-            } else {
-                latestReadingDiv.innerHTML = `<p class="text-gray-500">No readings yet. Tap the camera to start!</p>`;
-                avg7DaysEl.textContent = '-';
+                const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); const recentReadings = appState.history.filter(r => new Date(r.timestamp) > sevenDaysAgo);
+                if (recentReadings.length > 0) { const avg = recentReadings.reduce((s, r) => s + r.hb_value, 0) / recentReadings.length; avg7DaysEl.textContent = avg.toFixed(2); } else { avg7DaysEl.textContent = '-'; }
+            } else { latestReadingDiv.innerHTML = `<p class="text-gray-500">No readings yet. Tap the camera to start!</p>`; avg7DaysEl.textContent = '-'; }
+            const historyCardsDiv = document.getElementById('history-cards'); historyCardsDiv.innerHTML = '';
+            if (appState.history.length === 0) { historyCardsDiv.innerHTML = `<div class="bg-white text-center p-6 rounded-2xl"><p class="text-gray-500">Your past readings will appear here.</p></div>`; } else {
+                appState.history.forEach(r => { const c = document.createElement('div'); c.className = 'bg-white p-4 rounded-2xl shadow-md flex items-center space-x-4'; const dt = new Date(r.timestamp); const { color: cc } = getHbClassification(r.hb_value); c.innerHTML = `<img src="data:image/jpeg;base64,${r.crop_b64}" class="w-24 h-20 object-cover rounded-xl border"><div class="flex-1"><p class="font-semibold text-gray-800">${dt.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</p><p class="text-xs text-gray-500">${dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}</p><p class="text-xl font-bold ${cc} mt-1">${r.hb_value.toFixed(2)} g/dL</p></div>`; historyCardsDiv.appendChild(c); });
             }
-
-            // History View
-            const historyCardsDiv = document.getElementById('history-cards');
-            historyCardsDiv.innerHTML = '';
-            if (appState.history.length === 0) {
-                 historyCardsDiv.innerHTML = `<div class="bg-white text-center p-6 rounded-2xl"><p class="text-gray-500">Your past readings will appear here.</p></div>`;
-            } else {
-                appState.history.forEach(reading => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-white p-4 rounded-2xl shadow-md flex items-center space-x-4';
-                    const dt = new Date(reading.timestamp);
-                    const { color: cardColor } = getHbClassification(reading.hb_value);
-                    card.innerHTML = `<img src="data:image/jpeg;base64,${reading.crop_b64}" class="w-24 h-20 object-cover rounded-xl border"><div class="flex-1"><p class="font-semibold text-gray-800">${dt.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</p><p class="text-xs text-gray-500">${dt.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}</p><p class="text-xl font-bold ${cardColor} mt-1">${reading.hb_value.toFixed(2)} g/dL</p></div>`;
-                    historyCardsDiv.appendChild(card);
-                });
-            }
-            
-            // Progress View (Chart)
             updateChart();
-
-            // Insights View
             const insightsContent = document.getElementById('insights-content');
-            if(appState.history.length < 3) {
-                 insightsContent.innerHTML = `<p class="text-gray-500">Take at least 3 readings to generate your first health insight.</p>`;
-            } else {
-                const latest = appState.history[0].hb_value;
-                const first = appState.history[appState.history.length-1].hb_value;
-                const trend = latest - first;
-                let insightHTML = '';
-                if(trend > 0.5) {
-                    insightHTML += `<div class="text-center"><p class="text-2xl">📈</p><p class="font-semibold mt-2">Positive Trend!</p><p class="text-gray-600">Your estimated Hb has increased by ${trend.toFixed(2)} g/dL since you started tracking. Keep up the great work!</p></div>`;
-                } else if (trend < -0.5) {
-                    insightHTML += `<div class="text-center"><p class="text-2xl">📉</p><p class="font-semibold mt-2">Downward Trend</p><p class="text-gray-600">Your estimated Hb has decreased by ${Math.abs(trend).toFixed(2)} g/dL. It might be a good time to consult your doctor.</p></div>`;
-                } else {
-                    insightHTML += `<div class="text-center"><p class="text-2xl">📊</p><p class="font-semibold mt-2">Looking Stable</p><p class="text-gray-600">Your estimated Hb levels have remained consistent. Consistency is key in managing your health.</p></div>`;
-                }
-                insightsContent.innerHTML = insightHTML;
-            }
+            if(appState.history.length < 3) { insightsContent.innerHTML = `<p class="text-gray-500">Take at least 3 readings to generate your first health insight.</p>`; } else { const l = appState.history[0].hb_value, f = appState.history[appState.history.length-1].hb_value, t = l - f; let iH = ''; if(t > 0.5) { iH += `<div class="text-center"><p class="text-2xl">📈</p><p class="font-semibold mt-2">Positive Trend!</p><p class="text-gray-600">Your estimated Hb has increased by ${t.toFixed(2)} g/dL since you started tracking. Keep up the great work!</p></div>`; } else if (t < -0.5) { iH += `<div class="text-center"><p class="text-2xl">📉</p><p class="font-semibold mt-2">Downward Trend</p><p class="text-gray-600">Your estimated Hb has decreased by ${Math.abs(t).toFixed(2)} g/dL. It might be a good time to consult your doctor.</p></div>`; } else { iH += `<div class="text-center"><p class="text-2xl">📊</p><p class="font-semibold mt-2">Looking Stable</p><p class="text-gray-600">Your estimated Hb levels have remained consistent. Consistency is key in managing your health.</p></div>`; } insightsContent.innerHTML = iH; }
         };
-
-        const updateChart = () => {
-            if(appState.history.length === 0) return;
-            const ctx = document.getElementById('progress-chart').getContext('2d');
-            const labels = appState.history.map(r => new Date(r.timestamp).toLocaleDateString()).reverse();
-            const data = appState.history.map(r => r.hb_value).reverse();
-
-            if(progressChart) progressChart.destroy();
-            progressChart = new Chart(ctx, {
-                type: 'line',
-                data: { labels, datasets: [{
-                    label: 'Estimated Hb (g/dL)',
-                    data,
-                    fill: true,
-                    borderColor: '#0891b2',
-                    backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                    tension: 0.3
-                }]},
-                options: { responsive: true, maintainAspectRatio: true }
-            });
-        }
-        
-        // --- HELPER FUNCTIONS ---
+        const updateChart = () => { if(appState.history.length === 0) return; const ctx = document.getElementById('progress-chart').getContext('2d'); const labels = appState.history.map(r => new Date(r.timestamp).toLocaleDateString()).reverse(); const data = appState.history.map(r => r.hb_value).reverse(); if(progressChart) progressChart.destroy(); progressChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Estimated Hb (g/dL)', data, fill: true, borderColor: '#0891b2', backgroundColor: 'rgba(14, 165, 233, 0.1)', tension: 0.3 }]}, options: { responsive: true, maintainAspectRatio: true } }); };
         const getHbClassification = (hb) => { if (hb < 8) return { color: "text-red-500", text: "Severe Anemia Suspected" }; if (hb < 10) return { color: "text-orange-500", text: "Moderate Anemia Suspected" }; if (hb < 12) return { color: "text-yellow-500", text: "Mild Anemia Suspected" }; return { color: "text-cyan-600", text: "Likely Normal" }; };
         const getBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); });
         const saveState = () => localStorage.setItem('hbTracker-history', JSON.stringify(appState.history));
         const loadState = () => { const saved = localStorage.getItem('hbTracker-history'); return saved ? JSON.parse(saved) : []; };
 
-        // --- API Calls ---
-        const detectConjunctiva = async (b64) => { const url = `https://detect.roboflow.com/${ROBOFLOW_MODEL_ID}?api_key=${ROBOFLOW_API_KEY}&format=json&confidence=25`; const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: b64 }); if (!response.ok) throw new Error('Roboflow API request failed.'); const data = await response.json(); if (!data.predictions || data.predictions.length === 0) throw new Error('No conjunctiva detected.'); return data.predictions.sort((a, b) => b.confidence - a.confidence)[0]; };
-        const cropImageFromBox = (img, box) => new Promise(resolve => { const c = document.createElement('canvas'), w = box.width, h = box.height; c.width = w; c.height = h; const ctx = c.getContext('2d'); ctx.drawImage(img, box.x - w / 2, box.y - h / 2, w, h, 0, 0, w, h); resolve(c.toDataURL('image/jpeg').split(',')[1]); });
-        const analyzeCrop = async (base64Crop) => { const response = await fetch(BACKEND_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ "image_b64": base64Crop }) }); if (!response.ok) { const errorData = await response.json().catch(() => ({ detail: "An unknown server error occurred." })); throw new Error(errorData.detail || `Server responded with status: ${response.status}`); } return await response.json(); };
+        const analyzeImage = async (base64FullImage) => {
+            const response = await fetch(BACKEND_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ "image_b64": base64FullImage }) 
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: "An unknown server error occurred." }));
+                throw new Error(errorData.detail || `Server responded with status: ${response.status}`);
+            }
+            return await response.json();
+        };
 
-        // --- Event Listeners ---
-        navButtons.forEach(button => { button.addEventListener('click', () => showView(button.dataset.view)); });
+        navButtons.forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
         cameraButton.addEventListener('click', () => cameraModal.classList.remove('hidden'));
         closeModalBtn.addEventListener('click', () => cameraModal.classList.add('hidden'));
-
         cameraInputModal.addEventListener('change', async (event) => {
             const file = event.target.files[0];
             if (!file) return;
             analysisSectionModal.classList.remove('hidden');
-            const img = new Image(), objectURL = URL.createObjectURL(file);
-            img.src = objectURL; previewImageModal.src = objectURL;
+            previewImageModal.src = URL.createObjectURL(file);
             try {
-                loaderTextModal.textContent = 'Uploading... (1/4)'; const base64Full = await getBase64(file);
-                loaderTextModal.textContent = 'Detecting eye... (2/4)'; const box = await detectConjunctiva(base64Full);
-                loaderTextModal.textContent = 'Cropping image... (3/4)'; const base64Crop = await cropImageFromBox(img, box);
-                loaderTextModal.textContent = 'Analyzing with AI... (4/4)'; const result = await analyzeCrop(base64Crop);
-                const newReading = { hb_value: result.hb_value, crop_b64: base64Crop, timestamp: new Date().toISOString() };
-                appState.history.unshift(newReading); // Add to beginning of array
+                loaderTextModal.textContent = 'Uploading & Analyzing...';
+                const base64Full = await getBase64(file);
+                const result = await analyzeImage(base64Full);
+                const newReading = { hb_value: result.hb_value, crop_b64: result.crop_b64, timestamp: new Date().toISOString() };
+                appState.history.unshift(newReading);
                 saveState();
                 updateAllViews();
-                cameraModal.classList.add('hidden'); // Close modal on success
+                cameraModal.classList.add('hidden');
             } catch (error) {
                 console.error("ANALYSIS FAILED:", error);
                 alert(`Analysis Failed: ${error.message}`);
             } finally {
                 analysisSectionModal.classList.add('hidden');
                 cameraInputModal.value = '';
-                URL.revokeObjectURL(objectURL);
+                URL.revokeObjectURL(previewImageModal.src);
             }
         });
 
-        // --- App Initialization ---
         const initializeApp = () => { appState.history = loadState(); updateAllViews(); };
         initializeApp();
     });

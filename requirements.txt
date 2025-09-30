@@ -1,6 +1,5 @@
 fastapi
 uvicorn
-gunicorn
 joblib
 numpy
 Pillow

@@ -1,11 +1,11 @@
 from roboflow import Roboflow
 import os
 
-ROBOFLOW_API_KEY = "jMhyBQxeQvj69nttV0mN"
+ROBOFLOW_API_KEY = "jMhyBQxeQvj69nttV0mN"  # Your API Key
 MODEL_ID = "eye-conjunctiva-detector/2"
 
-def download_darknet_model():
-    if ROBOFLOW_API_KEY == "YOUR_PRIVATE_API_KEY":
+def download_tf_model():
+    if "YOUR_PRIVATE_API_KEY" in ROBOFLOW_API_KEY:
         print("Please paste your Roboflow Private API Key into the script.")
         return
 
@@ -16,13 +16,13 @@ def download_darknet_model():
     project = rf.project(project_id)
     version = project.version(int(version_number))
 
-    print(f"Downloading Darknet model for '{MODEL_ID}'...")
-    # Change is here: "onnx" is now "darknet"
-    version.download("darknet")
+    # Using the "tensorflow" format, as specified in the error message
+    print(f"Downloading TensorFlow Lite model for '{MODEL_ID}'...")
+    version.download("tensorflow")
 
     print("\n✅ Download complete!")
-    print(f"Look for a folder named '{project_id}.{version_number}' in this directory.")
-    print("Inside that folder, you will find '.weights' and '.cfg' model files.")
+    print("Look for a new folder in this directory containing your model.")
+    print("Inside, you should find a '.tflite' file.")
 
 if __name__ == "__main__":
-    download_darknet_model()
+    download_tf_model()
