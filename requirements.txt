@@ -1,8 +1,6 @@
-fastapi
-uvicorn
+gradio
 joblib
 numpy
 Pillow
 opencv-python-headless
 scikit-image
-python-multipart

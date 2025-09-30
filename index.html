@@ -106,7 +106,7 @@
             // --- CONFIGURATION ---
             const ROBOFLOW_API_KEY = "jMhyBQxeQvj69nttV0mN"; // Hardcoded API Key
             // IMPORTANT: PASTE YOUR VERCEL API URL HERE
-            const VERCEL_API_URL = "https://anemia-backend-api.vercel.app/api/analyze"; 
+            const BACKEND_API_URL = "https://alna7el-anemia-backend-api.hf.space/run/predict"; // <-- REPLACE THIS 
             const ROBOFLOW_MODEL_ID = "eye-conjunctiva-detector/2";
             
             // --- DOM Elements ---
@@ -219,7 +219,7 @@
             };
 
             const analyzeCrop = async (base64Crop) => {
-                const response = await fetch(VERCEL_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_b64: base64Crop }) });
+                const response = await fetch(BACKEND_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_b64: base64Crop }) });
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.detail || 'Analysis request to backend failed.');
