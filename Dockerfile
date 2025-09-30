@@ -1,13 +1,18 @@
 FROM python:3.10-slim
 WORKDIR /app
+
+# --- FIX: Install required system dependencies for OpenCV and other packages ---
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libgl1 \
+    libglib2.0-0 \
+    git-lfs && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# --- NEW STEP: Install Git LFS to handle large model weights ---
-RUN apt-get update && apt-get install -y git-lfs
-
-# --- COPY Model Weights (best.pt from your successful training run) ---
-# NOTE: Place your 'best.pt' file in the same directory as this Dockerfile.
+# COPY Model Weights (best.pt from your successful training run)
 COPY best.pt .
 
 COPY . .
