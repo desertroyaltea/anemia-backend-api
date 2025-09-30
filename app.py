@@ -27,7 +27,7 @@ except Exception as e:
     HB_MODEL = None
     print(f"CRITICAL: Could not load model. Error: {e}")
 
-# --- HELPER & FEATURE EXTRACTION FUNCTIONS (Unchanged) ---
+# --- HELPER & FEATURE EXTRACTION FUNCTIONS ---
 def kurtosis_numpy(data):
     mean = np.mean(data); std_dev = np.std(data)
     return np.mean(((data - mean) / std_dev) ** 4) if std_dev > 0 else 0
@@ -75,37 +75,31 @@ def vascularity_features_from_conjunctiva(rgb_u8: np.ndarray) -> dict:
 
 # --- MAIN API FUNCTION ---
 def predict(image_b64: str):
-    """Takes a base64 image string and returns the Hb prediction."""
     if HB_MODEL is None:
-        # Gradio handles errors gracefully, so we can return them as dicts
         return {"error": "Model is not loaded on the server."}
-    
     try:
         image_bytes = base64.b64decode(image_b64)
         crop_image = Image.open(io.BytesIO(image_bytes))
-        
         rgb = np.array(crop_image.convert("RGB"), dtype=np.uint8)
         glare_mask = detect_glare_mask(rgb)
         rgb_proc = inpaint_glare(rgb, glare_mask) if glare_mask.sum() > 0 else rgb
-        
         feats = {"glare_frac": float(glare_mask.mean())}
         feats.update(compute_baseline_features(Image.fromarray(rgb_proc)))
         feats.update(vascularity_features_from_conjunctiva(rgb_proc))
-
         x_vec = np.array([[feats.get(f, 0.0) for f in HB_FEATURES]], dtype=np.float32)
         hb_pred = float(HB_MODEL.predict(x_vec)[0])
-        
         return {"hb_value": hb_pred}
     except Exception as e:
         return {"error": f"An error occurred during analysis: {str(e)}"}
 
-# --- LAUNCH GRADIO INTERFACE ---
+# --- LAUNCH GRADIO INTERFACE (MODIFIED) ---
 iface = gr.Interface(
     fn=predict,
-    inputs=gr.Textbox(), # Input is a base64 string
-    outputs=gr.JSON(),   # Output is a JSON object
+    inputs=gr.Textbox(),
+    outputs=gr.JSON(),
     title="Anemia Hb Estimation API",
-    description="API endpoint for the Hb Tracker app."
+    description="API endpoint for the Hb Tracker app.",
+    api_name="predict"  # <-- THIS IS THE NEW, IMPORTANT LINE
 )
 
 if __name__ == "__main__":
