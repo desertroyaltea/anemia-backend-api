@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # This command will now work because the package name is correct for this OS version
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends libgl1-mesa-glx && \
+    apt-get install -y --no-install-recommends libgl1-mesa-glx libglib2.0-0 && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
