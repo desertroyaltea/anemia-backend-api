@@ -1,22 +1,27 @@
 # Use an official Python runtime as a parent image
 FROM python:3.10-slim
 
-# --- NEW LINE TO INSTALL SYSTEM DEPENDENCIES FOR OPENCV ---
-RUN apt-get update && apt-get install -y libgl1-mesa-glx
+# Set the environment to be non-interactive to prevent prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update package lists and install the required library for OpenCV, then clean up
+RUN apt-get update && \
+    apt-get install -y libgl1-mesa-glx && \
+    apt-get clean
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
+# Copy the requirements file
 COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application's code (including the models/ folder)
+# Copy the rest of the application's code
 COPY . .
 
-# Make port 10000 available to the world outside this container
+# Expose the port the app runs on
 EXPOSE 10000
 
 # Run the app directly with Uvicorn
