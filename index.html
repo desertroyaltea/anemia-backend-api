@@ -45,29 +45,48 @@
     </nav></footer>
     <div id="camera-modal" class="hidden fixed inset-0 bg-gray-900/70 z-50 flex items-center justify-center p-4"><div class="bg-white w-full max-w-md p-6 rounded-2xl">
         <h2 class="text-xl font-bold mb-4">New Reading</h2>
-        <label for="camera-input-modal" class="w-full text-center cursor-pointer block bg-gray-100 text-gray-700 py-8 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:bg-gray-200">Tap to open camera</label>
-        <input type="file" accept="image/*" capture="environment" id="camera-input-modal" class="hidden">
+        <div class="flex gap-4 mb-4">
+            <label for="camera-input-modal" class="flex-1 text-center cursor-pointer block bg-gray-100 text-gray-700 py-6 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:bg-gray-200"><svg class="h-8 w-8 mx-auto text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg><span class="mt-2 block font-semibold">Use Camera</span></label>
+            <label for="upload-input-modal" class="flex-1 text-center cursor-pointer block bg-gray-100 text-gray-700 py-6 px-4 rounded-xl border-2 border-dashed border-gray-300 hover:bg-gray-200"><svg class="h-8 w-8 mx-auto text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg><span class="mt-2 block font-semibold">Upload</span></label>
+        </div>
+        <input type="file" accept="image/*" capture="environment" id="camera-input-modal" class="hidden"><input type="file" accept="image/*" id="upload-input-modal" class="hidden">
         <div id="analysis-section-modal" class="hidden mt-4 text-center"><img id="preview-image-modal" class="max-h-60 mx-auto rounded-lg mb-4"><div class="flex items-center justify-center space-x-2 text-gray-600"><div class="spinner w-6 h-6 rounded-full border-4 border-gray-200"></div><span id="loader-text-modal">Analyzing...</span></div></div>
         <button id="close-modal-btn" class="mt-4 w-full bg-gray-200 text-gray-700 py-2 rounded-md">Cancel</button>
+    </div></div>
+    <div id="error-modal" class="hidden fixed inset-0 bg-gray-900/70 z-50 flex items-center justify-center p-4"><div class="bg-white w-full max-w-md p-6 rounded-2xl text-center">
+        <svg class="h-12 w-12 text-red-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <h2 class="text-xl font-bold mt-4">Analysis Failed</h2><p id="error-message" class="text-gray-600 mt-2">An unknown error occurred.</p>
+        <button id="close-error-btn" class="mt-6 w-full bg-red-500 text-white py-2 rounded-md">Close</button>
     </div></div>
     
     <script>
     document.addEventListener('DOMContentLoaded', () => {
+        // --- CONFIG ---
         const BACKEND_API_URL = "https://anemia-backend-api.onrender.com/api/analyze";
+        
+        // --- DOM Elements & State ---
         const navButtons = document.querySelectorAll('.nav-button'), views = document.querySelectorAll('.view');
         const cameraButton = document.getElementById('camera-button'), cameraModal = document.getElementById('camera-modal'), closeModalBtn = document.getElementById('close-modal-btn');
-        const cameraInputModal = document.getElementById('camera-input-modal'), analysisSectionModal = document.getElementById('analysis-section-modal');
-        const previewImageModal = document.getElementById('preview-image-modal'), loaderTextModal = document.getElementById('loader-text-modal');
-        let appState = { history: [] }; let progressChart = null;
+        const cameraInputModal = document.getElementById('camera-input-modal'), uploadInputModal = document.getElementById('upload-input-modal');
+        const analysisSectionModal = document.getElementById('analysis-section-modal'), previewImageModal = document.getElementById('preview-image-modal'), loaderTextModal = document.getElementById('loader-text-modal');
+        const errorModal = document.getElementById('error-modal'), errorMessageEl = document.getElementById('error-message'), closeErrorBtn = document.getElementById('close-error-btn');
+        let appState = { history: [] }, progressChart = null;
         
-        const showView = (viewId) => { views.forEach(v => v.classList.add('hidden')); document.getElementById(viewId).classList.remove('hidden'); navButtons.forEach(b => b.classList.toggle('nav-active', b.dataset.view === viewId)); };
+        // --- DEFINE ALL FUNCTIONS ONCE ---
+        const showView = (viewId) => {
+            views.forEach(v => v.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+            navButtons.forEach(b => b.classList.toggle('nav-active', b.dataset.view === viewId));
+        };
+
         const updateAllViews = () => {
             const latestReadingDiv = document.getElementById('latest-reading-dashboard'), avg7DaysEl = document.getElementById('avg-7-days'), totalReadingsEl = document.getElementById('total-readings');
             totalReadingsEl.textContent = appState.history.length;
-            if(appState.history.length > 0) {
+            if (appState.history.length > 0) {
                 const latest = appState.history[0]; const { color, text } = getHbClassification(latest.hb_value);
                 latestReadingDiv.innerHTML = `<p class="text-5xl font-bold ${color}">${latest.hb_value.toFixed(2)} <span class="text-3xl font-medium text-gray-500">g/dL</span></p><p class="text-md font-semibold ${color} mt-2">${text}</p>`;
-                const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); const recentReadings = appState.history.filter(r => new Date(r.timestamp) > sevenDaysAgo);
+                const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                const recentReadings = appState.history.filter(r => new Date(r.timestamp) > sevenDaysAgo);
                 if (recentReadings.length > 0) { const avg = recentReadings.reduce((s, r) => s + r.hb_value, 0) / recentReadings.length; avg7DaysEl.textContent = avg.toFixed(2); } else { avg7DaysEl.textContent = '-'; }
             } else { latestReadingDiv.innerHTML = `<p class="text-gray-500">No readings yet. Tap the camera to start!</p>`; avg7DaysEl.textContent = '-'; }
             const historyCardsDiv = document.getElementById('history-cards'); historyCardsDiv.innerHTML = '';
@@ -76,10 +95,25 @@
             }
             updateChart();
             const insightsContent = document.getElementById('insights-content');
-            if(appState.history.length < 3) { insightsContent.innerHTML = `<p class="text-gray-500">Take at least 3 readings to generate your first health insight.</p>`; } else { const l = appState.history[0].hb_value, f = appState.history[appState.history.length-1].hb_value, t = l - f; let iH = ''; if(t > 0.5) { iH += `<div class="text-center"><p class="text-2xl">📈</p><p class="font-semibold mt-2">Positive Trend!</p><p class="text-gray-600">Your estimated Hb has increased by ${t.toFixed(2)} g/dL since you started tracking. Keep up the great work!</p></div>`; } else if (t < -0.5) { iH += `<div class="text-center"><p class="text-2xl">📉</p><p class="font-semibold mt-2">Downward Trend</p><p class="text-gray-600">Your estimated Hb has decreased by ${Math.abs(t).toFixed(2)} g/dL. It might be a good time to consult your doctor.</p></div>`; } else { iH += `<div class="text-center"><p class="text-2xl">📊</p><p class="font-semibold mt-2">Looking Stable</p><p class="text-gray-600">Your estimated Hb levels have remained consistent. Consistency is key in managing your health.</p></div>`; } insightsContent.innerHTML = iH; }
+            if (appState.history.length < 3) { insightsContent.innerHTML = `<p class="text-gray-500">Take at least 3 readings to generate your first health insight.</p>`; } else { const l = appState.history[0].hb_value, f = appState.history[appState.history.length-1].hb_value, t = l - f; let iH = ''; if (t > 0.5) { iH = `<div class="text-center"><p class="text-2xl">📈</p><p class="font-semibold mt-2">Positive Trend!</p><p class="text-gray-600">Your estimated Hb has increased by ${t.toFixed(2)} g/dL since you started tracking. Keep up the great work!</p></div>`; } else if (t < -0.5) { iH = `<div class="text-center"><p class="text-2xl">📉</p><p class="font-semibold mt-2">Downward Trend</p><p class="text-gray-600">Your estimated Hb has decreased by ${Math.abs(t).toFixed(2)} g/dL. It might be a good time to consult your doctor.</p></div>`; } else { iH = `<div class="text-center"><p class="text-2xl">📊</p><p class="font-semibold mt-2">Looking Stable</p><p class="text-gray-600">Your estimated Hb levels have remained consistent. Consistency is key in managing your health.</p></div>`; } insightsContent.innerHTML = iH; }
         };
-        const updateChart = () => { if(appState.history.length === 0) return; const ctx = document.getElementById('progress-chart').getContext('2d'); const labels = appState.history.map(r => new Date(r.timestamp).toLocaleDateString()).reverse(); const data = appState.history.map(r => r.hb_value).reverse(); if(progressChart) progressChart.destroy(); progressChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Estimated Hb (g/dL)', data, fill: true, borderColor: '#0891b2', backgroundColor: 'rgba(14, 165, 233, 0.1)', tension: 0.3 }]}, options: { responsive: true, maintainAspectRatio: true } }); };
-        const getHbClassification = (hb) => { if (hb < 8) return { color: "text-red-500", text: "Severe Anemia Suspected" }; if (hb < 10) return { color: "text-orange-500", text: "Moderate Anemia Suspected" }; if (hb < 12) return { color: "text-yellow-500", text: "Mild Anemia Suspected" }; return { color: "text-cyan-600", text: "Likely Normal" }; };
+
+        const updateChart = () => {
+            if (appState.history.length === 0) return;
+            const ctx = document.getElementById('progress-chart').getContext('2d');
+            const labels = appState.history.map(r => new Date(r.timestamp).toLocaleDateString()).reverse();
+            const data = appState.history.map(r => r.hb_value).reverse();
+            if (progressChart) progressChart.destroy();
+            progressChart = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Estimated Hb (g/dL)', data, fill: true, borderColor: '#0891b2', backgroundColor: 'rgba(14, 165, 233, 0.1)', tension: 0.3 }]}, options: { responsive: true, maintainAspectRatio: true } });
+        };
+
+        const getHbClassification = (hb) => {
+            if (hb < 8) return { color: "text-red-500", text: "Severe Anemia Suspected" };
+            if (hb < 10) return { color: "text-orange-500", text: "Moderate Anemia Suspected" };
+            if (hb < 12) return { color: "text-yellow-500", text: "Mild Anemia Suspected" };
+            return { color: "text-cyan-600", text: "Likely Normal" };
+        };
+
         const getBase64 = (file) => new Promise((resolve, reject) => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error); });
         const saveState = () => localStorage.setItem('hbTracker-history', JSON.stringify(appState.history));
         const loadState = () => { const saved = localStorage.getItem('hbTracker-history'); return saved ? JSON.parse(saved) : []; };
@@ -97,14 +131,11 @@
             return await response.json();
         };
 
-        navButtons.forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
-        cameraButton.addEventListener('click', () => cameraModal.classList.remove('hidden'));
-        closeModalBtn.addEventListener('click', () => cameraModal.classList.add('hidden'));
-        cameraInputModal.addEventListener('change', async (event) => {
-            const file = event.target.files[0];
+        const handleFileSelect = async (file) => {
             if (!file) return;
             analysisSectionModal.classList.remove('hidden');
-            previewImageModal.src = URL.createObjectURL(file);
+            const objectURL = URL.createObjectURL(file);
+            previewImageModal.src = objectURL;
             try {
                 loaderTextModal.textContent = 'Uploading & Analyzing...';
                 const base64Full = await getBase64(file);
@@ -116,14 +147,24 @@
                 cameraModal.classList.add('hidden');
             } catch (error) {
                 console.error("ANALYSIS FAILED:", error);
-                alert(`Analysis Failed: ${error.message}`);
+                errorMessageEl.textContent = error.message;
+                errorModal.classList.remove('hidden');
             } finally {
                 analysisSectionModal.classList.add('hidden');
                 cameraInputModal.value = '';
-                URL.revokeObjectURL(previewImageModal.src);
+                uploadInputModal.value = '';
+                setTimeout(() => { URL.revokeObjectURL(objectURL); }, 100);
             }
-        });
+        };
 
+        // --- ATTACH EVENT LISTENERS & INITIALIZE ---
+        navButtons.forEach(button => button.addEventListener('click', () => showView(button.dataset.view)));
+        cameraButton.addEventListener('click', () => cameraModal.classList.remove('hidden'));
+        closeModalBtn.addEventListener('click', () => cameraModal.classList.add('hidden'));
+        closeErrorBtn.addEventListener('click', () => errorModal.classList.add('hidden'));
+        cameraInputModal.addEventListener('change', (event) => handleFileSelect(event.target.files[0]));
+        uploadInputModal.addEventListener('change', (event) => handleFileSelect(event.target.files[0]));
+        
         const initializeApp = () => { appState.history = loadState(); updateAllViews(); };
         initializeApp();
     });
