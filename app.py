@@ -35,27 +35,47 @@ except Exception as e:
     print(f"CRITICAL: Could not load models. Error: {e}")
 
 def detect_conjunctiva_local(pil_image: Image.Image):
-    model_input_size = (640, 640); original_size = pil_image.size
-    image = pil_image.resize(model_input_size); image_np = np.array(image).astype(np.float32) / 255.0
-    image_np = np.transpose(image_np, (2, 0, 1)); image_np = np.expand_dims(image_np, axis=0)
-    input_name = DETECTOR_SESSION.get_inputs()[0].name; output_name = DETECTOR_SESSION.get_outputs()[0].name
+    model_input_size = (640, 640)
+    original_size = pil_image.size
+    
+    image = pil_image.resize(model_input_size)
+    image_np = np.array(image).astype(np.float32) / 255.0
+    image_np = np.transpose(image_np, (2, 0, 1))
+    image_np = np.expand_dims(image_np, axis=0)
+
+    input_name = DETECTOR_SESSION.get_inputs()[0].name
+    output_name = DETECTOR_SESSION.get_outputs()[0].name
     outputs = DETECTOR_SESSION.run([output_name], {input_name: image_np})[0]
-    outputs = np.transpose(np.squeeze(outputs)); boxes, scores = [], []
+
+    outputs = np.transpose(np.squeeze(outputs))
+    boxes, scores = [], []
     x_factor, y_factor = original_size[0] / model_input_size[0], original_size[1] / model_input_size[1]
+
+    # --- Lowered threshold to be more lenient on the server ---
+    CONFIDENCE_THRESHOLD = 0.15 
+
     for i in range(outputs.shape[0]):
-        classes_scores = outputs[i][4:]; max_score = np.amax(classes_scores)
-        if max_score >= 0.25:
+        classes_scores = outputs[i][4:]
+        max_score = np.amax(classes_scores)
+        if max_score >= CONFIDENCE_THRESHOLD:
             x, y, w, h = outputs[i][0], outputs[i][1], outputs[i][2], outputs[i][3]
-            left = int((x - w / 2) * x_factor); top = int((y - h / 2) * y_factor)
-            width = int(w * x_factor); height = int(h * y_factor)
-            scores.append(max_score); boxes.append([left, top, width, height])
+            left = int((x - w / 2) * x_factor)
+            top = int((y - h / 2) * y_factor)
+            width = int(w * x_factor)
+            height = int(h * y_factor)
+            scores.append(max_score)
+            boxes.append([left, top, width, height])
+    
     if not boxes: return None
-    indices = cv2.dnn.NMSBoxes(boxes, scores, 0.25, 0.45)
+    
+    indices = cv2.dnn.NMSBoxes(boxes, scores, CONFIDENCE_THRESHOLD, 0.45)
     if len(indices) > 0:
-        best_box_index = indices.flatten()[0]; best_box = boxes[best_box_index]
+        best_box_index = indices.flatten()[0]
+        best_box = boxes[best_box_index]
         left, top, width, height = best_box
         return pil_image.crop((left, top, left + width, top + height))
-    else: return None
+    else:
+        return None
 
 def kurtosis_numpy(data): mean = np.mean(data); std_dev = np.std(data); return np.mean(((data - mean) / std_dev) ** 4) if std_dev > 0 else 0
 def detect_glare_mask(rgb: np.ndarray) -> np.ndarray: hsv = cv2.cvtColor(rgb, cv2.COLOR_RGB2HSV).astype(np.float32); S, V = hsv[..., 1] / 255.0, hsv[..., 2] / 255.0; mask_hsv = (V > 0.90) & (S < 0.25); gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0; hi = float(np.quantile(gray, 0.995)); mask_gray = gray >= hi; mask = cv2.morphologyEx((mask_hsv | mask_gray).astype(np.uint8), cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=1); return cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
