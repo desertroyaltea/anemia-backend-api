@@ -79,6 +79,7 @@ def vascularity_features_from_conjunctiva(rgb_u8: np.ndarray) -> dict:
         torts.append(float(coords.shape[0]) / chord)
     return {"vessel_area_fraction": mask.sum() / area, "mean_vesselness": vmap.mean(), "p90_vesselness": np.percentile(vmap, 90), "skeleton_len_per_area": skel.sum() / area, "branchpoint_density": branches.sum() / area, "tortuosity_mean": np.mean(torts) if torts else 1.0}
 
+
 @app.post("/api/analyze")
 async def analyze_image(image_data: ImageData):
     if HB_MODEL is None or DETECTOR_MODEL is None: raise HTTPException(status_code=500, detail="A model is not loaded on the server.")
@@ -86,8 +87,18 @@ async def analyze_image(image_data: ImageData):
         image_bytes = base64.b64decode(image_data.image_b64)
         image_pil = Image.open(io.BytesIO(image_bytes))
         full_image = ImageOps.exif_transpose(image_pil).convert("RGB")
+
+        # --- SOLUTION: RESIZE THE IMAGE TO SAVE MEMORY ---
+        # Define a max size (e.g., 1280x1280 pixels) which is plenty for detection
+        MAX_SIZE = (1280, 1280)
+        # The thumbnail method resizes the image in-place while maintaining aspect ratio
+        full_image.thumbnail(MAX_SIZE, Image.Resampling.LANCZOS)
+        # --- END OF SOLUTION ---
+
+        # The rest of the process now uses the smaller, memory-friendly image
         crop_image = detect_conjunctiva_local(full_image)
-        if crop_image is None: raise HTTPException(status_code=400, detail="Could not detect a valid conjunctiva in the image.")
+        if crop_image is None: raise HTTPException(status_code=400, detail="Could not detect a valid conjunctiva in the image. Please try taking a clearer, closer photo in good lighting.")
+        
         rgb = np.array(crop_image.convert("RGB"), dtype=np.uint8)
         glare_mask = detect_glare_mask(rgb); rgb_proc = inpaint_glare(rgb, glare_mask) if glare_mask.sum() > 0 else rgb
         feats = {"glare_frac": float(glare_mask.mean())}; feats.update(compute_baseline_features(Image.fromarray(rgb_proc))); feats.update(vascularity_features_from_conjunctiva(rgb_proc))
@@ -96,6 +107,8 @@ async def analyze_image(image_data: ImageData):
         buffered = io.BytesIO(); crop_image.save(buffered, format="JPEG")
         crop_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
         return {"hb_value": hb_pred, "crop_b64": crop_b64}
+    except HTTPException as http_exc:
+        raise http_exc
     except Exception as e:
         import traceback; traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"An unexpected server error occurred.")
