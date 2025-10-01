@@ -4,10 +4,11 @@ FROM python:3.10-slim
 # Set the environment to be non-interactive to prevent prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Update package lists and install the required library for OpenCV, then clean up
+# A more robust command to install system dependencies and then clean up
 RUN apt-get update && \
-    apt-get install -y libgl1-mesa-glx && \
-    apt-get clean
+    apt-get install -y --no-install-recommends libgl1-mesa-glx && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
 WORKDIR /app
