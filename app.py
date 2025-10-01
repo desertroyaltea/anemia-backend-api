@@ -11,6 +11,7 @@ from skimage import exposure, filters, morphology, measure
 from skimage.morphology import skeletonize
 from pathlib import Path
 from ultralytics import YOLO # Uses the full library
+from PIL import Image, ImageOps
 
 class ImageData(BaseModel):
     image_b64: str
@@ -83,7 +84,8 @@ async def analyze_image(image_data: ImageData):
     if HB_MODEL is None or DETECTOR_MODEL is None: raise HTTPException(status_code=500, detail="A model is not loaded on the server.")
     try:
         image_bytes = base64.b64decode(image_data.image_b64)
-        full_image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        image_pil = Image.open(io.BytesIO(image_bytes))
+        full_image = ImageOps.exif_transpose(image_pil).convert("RGB")
         crop_image = detect_conjunctiva_local(full_image)
         if crop_image is None: raise HTTPException(status_code=400, detail="Could not detect a valid conjunctiva in the image.")
         rgb = np.array(crop_image.convert("RGB"), dtype=np.uint8)
