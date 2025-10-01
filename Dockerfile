@@ -1,13 +1,12 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+# Pin the base image to the stable "Bullseye" version of the OS
+FROM python:3.10-slim-bullseye
 
 # Set the environment to be non-interactive to prevent prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# A more robust command to install system dependencies and then clean up
+# This command will now work because the package name is correct for this OS version
 RUN apt-get update && \
     apt-get install -y --no-install-recommends libgl1-mesa-glx && \
-    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
