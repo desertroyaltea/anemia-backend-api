@@ -1,0 +1,197 @@
+{
+  "classification": {
+    "default_threshold": {
+      "threshold": 0.5,
+      "accuracy": 0.7727272727272727,
+      "precision": 0.7419354838709677,
+      "recall": 0.7666666666666667,
+      "f1": 0.7540983606557377,
+      "roc_auc": 0.8231481481481483
+    },
+    "optimized_threshold": {
+      "threshold": 0.23999999999999994,
+      "accuracy": 0.6363636363636364,
+      "precision": 0.5652173913043478,
+      "recall": 0.8666666666666667,
+      "f1": 0.6842105263157895,
+      "roc_auc": 0.8351851851851851
+    },
+    "cv_results": {
+      "accuracy_mean": 0.8146236559139786,
+      "accuracy_std": 0.08828631462191737,
+      "recall_mean": 0.7989010989010988,
+      "recall_std": 0.12175506799529268,
+      "f1_mean": 0.7962637362637363,
+      "f1_std": 0.10259664580514967,
+      "roc_auc_mean": 0.8463154492566257,
+      "roc_auc_std": 0.09001518761692759
+    }
+  },
+  "regression": {
+    "mae": 1.4786026937102692,
+    "rmse": 1.8336117730818873,
+    "r2": 0.37002541426159974
+  },
+  "feature_importance": [
+    {
+      "feature": "b_mean",
+      "classification_importance": 0.11021995282860159,
+      "regression_importance": 0.07166900503491348
+    },
+    {
+      "feature": "R_norm_mean",
+      "classification_importance": 0.08721502052667775,
+      "regression_importance": 0.1144696755383418
+    },
+    {
+      "feature": "RB",
+      "classification_importance": 0.08533993236048039,
+      "regression_importance": 0.09499004608435671
+    },
+    {
+      "feature": "R_mean",
+      "classification_importance": 0.053949176045278845,
+      "regression_importance": 0.03611891641705161
+    },
+    {
+      "feature": "R_p90",
+      "classification_importance": 0.050987998102896386,
+      "regression_importance": 0.05070149279618476
+    },
+    {
+      "feature": "V_mean",
+      "classification_importance": 0.04929542887892827,
+      "regression_importance": 0.031663360610413686
+    },
+    {
+      "feature": "R_norm_p50",
+      "classification_importance": 0.04756349075611902,
+      "regression_importance": 0.06495555045251107
+    },
+    {
+      "feature": "R_p50",
+      "classification_importance": 0.04501726727830168,
+      "regression_importance": 0.03447398853288804
+    },
+    {
+      "feature": "a_mean",
+      "classification_importance": 0.03782944565224184,
+      "regression_importance": 0.06607537990266471
+    },
+    {
+      "feature": "R_p10",
+      "classification_importance": 0.03247700637365295,
+      "regression_importance": 0.025560033895749585
+    },
+    {
+      "feature": "R_std",
+      "classification_importance": 0.030791571142203118,
+      "regression_importance": 0.017926275083665576
+    },
+    {
+      "feature": "glare_frac",
+      "classification_importance": 0.027895050430048828,
+      "regression_importance": 0.02387541602230786
+    },
+    {
+      "feature": "RG",
+      "classification_importance": 0.02748685421858219,
+      "regression_importance": 0.04750779344821446
+    },
+    {
+      "feature": "B_p10",
+      "classification_importance": 0.025419294810133816,
+      "regression_importance": 0.019303434196936257
+    },
+    {
+      "feature": "a_std",
+      "classification_importance": 0.022907354151456304,
+      "regression_importance": 0.022688110618511777
+    },
+    {
+      "feature": "S_mean",
+      "classification_importance": 0.022835233085521774,
+      "regression_importance": 0.03683712488582287
+    },
+    {
+      "feature": "L_mean",
+      "classification_importance": 0.019716585132688414,
+      "regression_importance": 0.012765377398069959
+    },
+    {
+      "feature": "gray_mean",
+      "classification_importance": 0.01941873705596368,
+      "regression_importance": 0.016033530335427888
+    },
+    {
+      "feature": "gray_p10",
+      "classification_importance": 0.019179450553191126,
+      "regression_importance": 0.02125638625436348
+    },
+    {
+      "feature": "S_p50",
+      "classification_importance": 0.018270458583198368,
+      "regression_importance": 0.01811974046020842
+    },
+    {
+      "feature": "gray_p90",
+      "classification_importance": 0.018262624190392308,
+      "regression_importance": 0.012279957468351255
+    },
+    {
+      "feature": "gray_entropy",
+      "classification_importance": 0.01702878702994607,
+      "regression_importance": 0.013928519029312443
+    },
+    {
+      "feature": "G_mean",
+      "classification_importance": 0.015924177985499152,
+      "regression_importance": 0.01163340748352099
+    },
+    {
+      "feature": "gray_kurt",
+      "classification_importance": 0.01516338487151139,
+      "regression_importance": 0.01519338832566608
+    },
+    {
+      "feature": "gray_range",
+      "classification_importance": 0.014983343746421598,
+      "regression_importance": 0.018189034690610614
+    },
+    {
+      "feature": "B_mean",
+      "classification_importance": 0.014550728880005269,
+      "regression_importance": 0.01352732551848459
+    },
+    {
+      "feature": "B_p75",
+      "classification_importance": 0.013728887520526426,
+      "regression_importance": 0.01867969277825601
+    },
+    {
+      "feature": "gray_skew",
+      "classification_importance": 0.012663071346519849,
+      "regression_importance": 0.017318071054958275
+    },
+    {
+      "feature": "G_kurt",
+      "classification_importance": 0.012212012296406727,
+      "regression_importance": 0.015072102261863262
+    },
+    {
+      "feature": "G_std",
+      "classification_importance": 0.011333913700847029,
+      "regression_importance": 0.012736879558543343
+    },
+    {
+      "feature": "B_std",
+      "classification_importance": 0.011121801452680678,
+      "regression_importance": 0.014457764037627241
+    },
+    {
+      "feature": "gray_std",
+      "classification_importance": 0.0092119590130772,
+      "regression_importance": 0.009993219824201968
+    }
+  ]
+}
